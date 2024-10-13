@@ -9,11 +9,11 @@ library(MASS);library(lme4);library(lmerTest);library(lsmeans);library(ggeffects
 library(ggplot2);library(effects);library(ncf);library(ape);library(sjPlot);library(gridExtra);
 library(MuMIn);library(tidyverse);library(car); library(V8); library(rsq); library(DHARMa); library(grateful)
 
-source("Master_modelling.R")  #change to functions?? 
+source("extra_functions.R")
 options(na.action = "na.fail") #Change na. action
 
 #Load dataset from data cleaning script
-gdat.ref <- readRDS("data/fulldata_for_analysis_2023.rds") %>%
+gdat.ref <- readRDS("data/fulldata_for_analysis_2024.rds") %>%
   dplyr::select(c("entity_ID","entity_class","nfix","nfixno", "latitude","abs.lat","longitude", # Select columns
                   "landtype","status","presence","area","elev_range","precipitation","dist", "temperature","urbanland")) 
 
@@ -220,14 +220,26 @@ broad.prop.model.rac <- glm(cbind(nfix,nfixno)~landtype*status+abs.lat+area+elev
 summary(broad.prop.model.rac)
 
 #M2 with only selected variables after stepwise regression
-broad.prop.model<- glmer(cbind(nfix,nfixno)~landtype*status+abs.lat+area+elev_range+precipitation + (1|entity_ID), data =gdat.ml.prop, family= binomial(link ="logit"))
+broad.prop.model<- glm(cbind(nfix,nfixno)~landtype*status+abs.lat+area+elev_range+precipitation, data =gdat.ml.prop, family= binomial(link ="logit"))
 summary(broad.prop.model)
+
+ref.land.stat <- lsmeans(broad.prop.model,pairwise~landtype*status, data= gdat.ml.prop, type="response")
+ref.table.land.stat <- as.data.frame(ref.land.stat$lsmeans) 
 
 #M2 including spatial correlation variable (rac)
 rac <- Spat.cor.rep(broad.prop.model,gdat.ml.prop,2000)
 broad.prop.model.rac <- glm(cbind(nfix,nfixno)~landtype*status+abs.lat+area+elev_range+precipitation+rac, data = gdat.ml.prop, family = binomial(link ="logit")) #has to be exactly the same as the model but with +rac
 summary(broad.prop.model.rac)
 
+#add rac to df to include in lsmeans.
+gdat.ml.prop$rac <- rac
+
+ref.land.stat.rac<-lsmeans(broad.prop.model.rac,pairwise~landtype*status, data = gdat.ml.prop, type="response")
+ref.table.land.stat.rac<-as.data.frame(ref.land.stat.rac$lsmeans) 
+
+
+
+####take out for test####
 #test zero inflation:
 testZeroInflation(broad.prop.model.rac)
 #test dispersion:
@@ -279,6 +291,85 @@ results.df <- as.data.frame(results)
 results.df
 
 
+#Plot M2 Broad Proportion naturalized
+
+#subset data to only include naturalized for plot
+ref.table.land.stat.rac.ntz <- ref.table.land.stat.rac%>%filter(status=="naturalized") #subset lsmeans to only include naturalized for plot 
+
+#Create a custom color scale
+colScale <- scale_colour_manual(values=c("coral","coral","coral","coral"))
+fillScale <- scale_fill_manual(values=c("coral","coral","coral","coral"))
+
+gdat3cat<- gdat.ml.prop %>% mutate(propnfix=nfix/(nfix+nfixno))%>%filter(status=="naturalized") #only naturalized 
+
+broadpropntz<- 
+  ggplot(ref.table.land.stat.rac.ntz, aes(x = landtype, y = lsmean, fill = status, color = status))  + 
+  geom_point(position=position_dodge(1), size = 2) + 
+  geom_errorbar(aes(ymin=lsmean-SE, ymax=lsmean+SE), width=0.4,size=1, position=position_dodge(1)) + 
+  theme(legend.justification=c(1,1), legend.position=c(1,1))+
+  geom_bar(stat="identity",position=position_dodge(1), alpha=0.3)+
+  geom_point(data = gdat3cat,aes(x=landtype,y=propnfix,color=landtype),position=position_jitterdodge(dodge.width = 1),size=2,alpha=0.3)+
+  coord_cartesian(ylim=c(0,0.02))+
+  colScale+
+  fillScale+
+  labs(y="Proportion N-fixing Plant Species")+
+  xlab(" ")+
+  #ggtitle("Model Proportion~ Landtype* Status only ntz")+
+  theme_classic(base_size = 30) +
+  theme(legend.justification=c(1,1), legend.position=c(1,1))+
+  theme(legend.position = "top")+
+  theme(legend.key = element_rect(colour ="coral" ))+
+  theme(legend.background = element_blank(),legend.box.background = element_rect(colour = "black"))+
+  guides(color="none", fill = guide_legend(title="Floral status:",override.aes = list(shape = NA,size = 10)))+
+  theme(plot.title=element_text(size=20))
+
+broadpropntz
+
+#Saving the plot as a png
+png("figures/broad_proportion_naturalized.jpg", width=10, height= 10, units='in', res=300)
+broadpropntz
+dev.off()
+
+
+#Native plot
+ref.table.land.stat.rac.ntv <- ref.table.land.stat.rac%>%filter(status=="native") #subset lsmeans to only include naturalized for plot 
+
+
+#Create a custom color scale
+colScale <- scale_colour_manual(values=c("darkseagreen3","darkseagreen3"))
+fillScale <- scale_fill_manual(values=c("darkseagreen3","darkseagreen3"))
+
+gdat3cat<- gdat.ml.prop %>% mutate(propnfix=nfix/(nfix+nfixno))%>%filter(status=="native")
+
+broadpropntv<- 
+  ggplot(ref.table.land.stat.rac.ntv, aes(x = landtype, y = lsmean, fill = status, color = status))  + 
+  geom_point(position=position_dodge(1), size = 2) + 
+  geom_errorbar(aes(ymin=lsmean-SE, ymax=lsmean+SE), width=0.4,size=1, position=position_dodge(1)) + 
+  theme(legend.justification=c(1,1), legend.position=c(1,1))+
+  geom_bar(stat="identity",position=position_dodge(1), alpha=0.3)+
+  geom_point(data = gdat3cat,aes(x=landtype,y=propnfix,color=status),position=position_jitterdodge(dodge.width = 1),size=2,alpha=0.3)+
+  coord_cartesian(ylim=c(0,0.16))+
+  colScale+
+  fillScale+
+  labs(y="Proportion N-fixing Plant Species")+
+  xlab(" ")+
+  #ggtitle("Model Proportion~ Landtype* Status")+
+  theme_classic(base_size = 30) +
+  theme(legend.justification=c(1,1), legend.position=c(1,1))+
+  theme(legend.position = "top")+
+  theme(legend.key = element_rect(colour =c("darkseagreen3","darkseagreen3") ))+
+  theme(legend.background = element_blank(),legend.box.background = element_rect(colour = "black"))+
+  guides(color="none", fill = guide_legend(title="Floral status:",override.aes = list(shape = NA)))+
+  theme(axis.text.y=element_text(size=30))+
+  theme(axis.text.x=element_text(size=30))                  # All font sizes
+
+broadpropntv
+
+#Saving the plot as a png
+png("figures/broad_proportion_ntv.jpg", width=10, height= 10, units='in', res=300)
+broadpropntv
+dev.off()
+
 ####Data only including NATURALIZED species on OCEANIC ISLANDS (M3,M4)####
 
 #Load dataset and subset to only naturalized species and oceanic islands
@@ -286,14 +377,11 @@ gdat.isl.ntz <- gdat.ref %>%
   dplyr::select(c("entity_ID","entity_class","nfix","nfixno", "latitude","abs.lat","longitude", # Select columns
                   "landtype","status","presence","area","dist","elev_range","precipitation", "temperature","urbanland"))%>%
   filter(status=="naturalized")%>%
-  add_row(entity_ID = 0000, entity_class="Island", area=6)%>% #add breakpoint for testing small island effect
   mutate(area = as.vector(log10((area)+.01)))%>%  #log10 transformation of area for models only; remove for figures
   filter(landtype=="oceanic")%>%
   drop_na() %>%
   mutate_at(c("abs.lat","area","dist","elev_range","precipitation", "temperature","urbanland"), scale)#%>%  #scale all explanatory variables
-  
-breakpoint_data <- gdat.isl.ntz%>%filter(entity_ID==0000) 
-breakpoint_value <- breakpoint_data$area
+
 
 #check correlations
 dat <- gdat.isl.ntz
@@ -307,9 +395,8 @@ Mypairs(dat[,cont.var]) # area and elevation range 0.72, abs.lat and temperature
 model.oc.pres.full<- glm(presence~abs.lat +area +dist +elev_range	+precipitation+temperature +urbanland	+area:dist +urbanland:dist, data=gdat.isl.ntz, family=binomial(link ="logit"))
 summary(model.oc.pres.full)
 
-
 #Correlogram to test distance of spatial autocorrelation
-correlogram(model.oc.pres.ntz, gdat.isl.ntz, "figures/ntzocprescorrelogram.jpg")
+correlogram(model.oc.pres.full, gdat.isl.ntz, "figures/ntzocprescorrelogram.jpg")
 
 #model including spatial correlation variable (rac)
 rac <- Spat.cor.rep(model.oc.pres.full,gdat.isl.ntz,2000)
@@ -317,25 +404,25 @@ model.oc.pres.rac.full <- glm(presence~abs.lat +area +dist +elev_range+precipita
 summary(model.oc.pres.rac.full)
 
 #11.10. test without any correlations remove temperature and elev_range bc of correlation, then stepwise regression
-testcorrelationmodel<- glm(presence~abs.lat +area +dist+area:dist, data = gdat.isl.ntz, family = binomial(link ="logit"))
+testcorrelationmodel<- glm(presence~abs.lat +area+area:dist, data = gdat.isl.ntz, family = binomial(link ="logit"))
 summary(testcorrelationmodel)
 
 #model including spatial correlation variable (rac)
 rac <- Spat.cor.rep(testcorrelationmodel,gdat.isl.ntz,2000)
-model.oc.pres.ntz.rac <- glm(presence~abs.lat +area+ dist+area:dist+rac, data = gdat.isl.ntz, family = binomial(link ="logit")) #has to be exactly the same as the model but with +rac
+model.oc.pres.ntz.rac <- glm(presence~abs.lat +area+area:dist+rac, data = gdat.isl.ntz, family = binomial(link ="logit")) #has to be exactly the same as the model but with +rac
 summary(model.oc.pres.ntz.rac)
 
 
 #before 11.10 Model with selected variables after stepwise regression
-model.oc.pres.ntz<- glm(presence~abs.lat +area+ temperature+area:dist, data=gdat.isl.ntz, family=binomial(link ="logit"))
-summary(model.oc.pres.ntz)
+#model.oc.pres.ntz<- glm(presence~abs.lat +area+ temperature+area:dist, data=gdat.isl.ntz, family=binomial(link ="logit"))
+#summary(model.oc.pres.ntz)
 
 #model including spatial correlation variable (rac)
-rac <- Spat.cor.rep(model.oc.pres.ntz,gdat.isl.ntz,2000)
-model.oc.pres.ntz.rac <- glm(presence~abs.lat +area+ temperature+area:dist+rac, data = gdat.isl.ntz, family = binomial(link ="logit")) #has to be exactly the same as the model but with +rac
-summary(model.oc.pres.ntz.rac)
+#rac <- Spat.cor.rep(model.oc.pres.ntz,gdat.isl.ntz,2000)
+#model.oc.pres.ntz.rac <- glm(presence~abs.lat +area+ temperature+area:dist+rac, data = gdat.isl.ntz, family = binomial(link ="logit")) #has to be exactly the same as the model but with +rac
+#summary(model.oc.pres.ntz.rac)
 
-#check variance inflation factor (should be below 5 for all variables)
+#check variance inflation factor 
 vif(model.oc.pres.ntz.rac)
 
 #calculating variable importance using Rsquared and partial Rsquared
@@ -358,15 +445,11 @@ testZeroInflation(simulationOutput)
 #check residuals for each variable separately
 E2 <- resid(model.oc.pres.ntz.rac, type = "pearson")
 #list of variables: abs.lat, area, dist, elev_range, precipitation, urbanland
-plot(E2 ~ temperature, data = gdat.isl.ntz)
+plot(E2 ~ abs.lat, data = gdat.isl.ntz)
 
-var.plot<- ggeffect(model.oc.pres.ntz.rac, terms=c("temperature"), type="re")
-temp.plot<- plot(var.plot, colors="coral")
-
-#Saving the plot as a png
-png("figures/temperature_oc_pres_ntz_orange.jpg", width=10, height= 10, units='in', res=300)
-temp.plot
-dev.off()
+var.plot<- ggeffect(model.oc.pres.ntz.rac, terms=c("abs.lat"), type="re")
+effect.plot<- plot(var.plot, colors="coral")
+effect.plot
 
 
 #Figure area:distance interaction
@@ -433,8 +516,9 @@ names(oceanic.prop)
 cont.var <- c("abs.lat", "elev_range","area","dist","precipitation", "temperature", "urbanland")
 Mypairs(oceanic.prop[,cont.var]) # area and elevation range 0.74, abs.lat temperature -0.86
 
+
 #####M4  naturalized proportion on oceanic islands
-#number of objects 116
+
 model.oc.prop.full<- glm(cbind(nfix,nfixno)~abs.lat +area +dist +elev_range	+precipitation+temperature +urbanland	+area:dist +urbanland:dist, data=oceanic.prop, family=binomial(link ="logit"))
 summary(model.oc.prop.full)
 
@@ -462,17 +546,6 @@ vif(model.oc.prop.rac)
 rsq(model.oc.prop.rac)
 prsq.oc.prop.ntz<-rsq.partial(model.oc.prop.rac, adj=FALSE)
 
-var.plot<- ggeffect(model.oc.prop.rac, terms=c("dist","area"), type="re")
-plot(var.plot)
-
-var.plot<- ggeffect(model.oc.prop.rac, terms=c("urbanland"), type="re")
-landuse.plot<- plot(var.plot, colors="coral")
-
-#Saving the plot as a png
-png("figures/humanlanduse_oc_pres_ntz_orange.jpg", width=10, height= 10, units='in', res=300)
-landuse.plot
-dev.off()
-
 #check model assumptions
 
 #check for overdispersion
@@ -481,15 +554,24 @@ disp_check(model.oc.prop.rac, oceanic.prop)
 #access residuals:
 residuals(model.oc.prop.rac)
 
-var.plot<- ggeffect(model.oc.prop.rac, terms=c("urbanland"), type="re")
-plot(var.plot)
-
 #check residuals for each variable separately
 E2 <- resid(model.oc.prop.rac, type = "pearson")
 #list of variables: abs.lat, area, dist, elev_range, precipitation, urbanland
 plot(E2 ~ dist, data = oceanic.prop)
 
+#test area distance effect
+var.plot<- ggeffect(model.oc.prop.rac, terms=c("dist","area"), type="re")
+plot(var.plot)
 
+#plot effect of human land use
+var.plot<- ggeffect(model.oc.prop.rac, terms=c("urbanland"), type="re")
+landuse.plot<- plot(var.plot, colors="coral")
+landuse.plot
+
+#Saving the plot as a png
+png("figures/humanlanduse_oc_pres_ntz_orange.jpg", width=10, height= 10, units='in', res=300)
+landuse.plot
+dev.off()
 
 ####Data only including NATIVE species on OCEANIC ISLANDS (M5,M6)####
 
@@ -508,6 +590,7 @@ gdat.isl.ntv <- gdat.ref %>%
 
 ####M5 presence of native N-fixing species on oceanic islands####
 
+
 #create data subset for presence analysis
 oceanic.pres.ntv <- gdat.isl.ntv%>%
   filter(!entity_ID == "594")# one data point removed due to extreme residual outlier status (see below)
@@ -522,10 +605,8 @@ Mypairs(dat[,cont.var]) # area and elevation range 0.72, abs.lat and temperature
 model.oc.pres.full <- glm(presence~abs.lat + area + dist +elev_range +precipitation+temperature +area:dist , data=oceanic.pres.ntv, family=binomial(link ="logit"))
 summary(model.oc.pres.full)
 
-
 #Correlogram to test distance of spatial autocorrelation
 correlogram(model.oc.pres, oceanic.pres.ntv, "figures/ntvocprescorrelogram.jpg")
-
 
 #model including spatial correlation variable (rac)
 rac <- Spat.cor.rep(model.oc.pres.full,oceanic.pres.ntv,2000)
@@ -543,9 +624,6 @@ summary(model.oc.pres.rac)
 
 #check variance inflation factor (should be below 5 for all variables)
 vif(model.oc.pres.rac)
-
-# pinpoint the outlier: entity_ID = 594
-outlier <- oceanic.pres.ntv %>% filter(abs.lat < -1) %>% filter(dist < 1.1 & dist > 0.9) %>% filter(area < 1.1 & area > 0.9)
 
 #check variable importance
 rsq(model.oc.pres.rac)
@@ -570,14 +648,19 @@ E2 <- resid(model.oc.pres.rac, type = "pearson")
 plot(E2 ~ precipitation, data = oceanic.pres.ntv)
 #outlier in precipitation
 
+# pinpoint the outlier: entity_ID = 594
+outlier <- oceanic.pres.ntv %>% filter(abs.lat < -1) %>% filter(dist < 1.1 & dist > 0.9) %>% filter(area < 1.1 & area > 0.9)
+
+
 var.plot<- ggeffect(model.oc.pres.rac, terms=c("area"), type="re")
 plot(var.plot)
 
 var.plot<- ggeffect(model.oc.pres.rac, terms=c("precipitation"), type="re")
 precip.ntv.plot<- plot(var.plot, colors="darkseagreen3")
+precip.ntv.plot
 
 #Saving the plot as a png
-png("figures/precip_oc_pres_ntv_orange.jpg", width=10, height= 10, units='in', res=300)
+png("figures/precip_oc_pres_ntv.jpg", width=10, height= 10, units='in', res=300)
 precip.ntv.plot
 dev.off()
 
@@ -604,7 +687,7 @@ oc_pres_native_dist_plot<-ggplot(pred.ml, aes(x = dist, y = fit))+
 oc_pres_native_dist_plot
 
 #Saving the plot as a png
-png("figures/dist_oc_pres_native_points.jpg", width=10, height= 10, units='in', res=300)
+png("figures/dist_oc_pres_native.jpg", width=10, height= 10, units='in', res=300)
 oc_pres_native_dist_plot
 dev.off()
 
@@ -670,21 +753,21 @@ plot(E2 ~ abs.lat, data = oceanic.prop.ntv)
 #outlier in precipitation
 
 
-var.plot<- ggeffect(model.oc.prop.rac, terms=c("temperature"), type="re")
-temp.ntv.plot<- plot(var.plot, colors="darkseagreen3")
+#var.plot<- ggeffect(model.oc.prop.rac, terms=c("temperature"), type="re")
+#temp.ntv.plot<- plot(var.plot, colors="darkseagreen3")
 
 #Saving the plot as a png
-png("figures/temp_oc_prop_ntv_green.jpg", width=10, height= 10, units='in', res=300)
-temp.ntv.plot
-dev.off()
+#png("figures/temp_oc_prop_ntv_green.jpg", width=10, height= 10, units='in', res=300)
+#temp.ntv.plot
+#dev.off()
 
 
 var.plot<- ggeffect(model.oc.prop.rac, terms=c("precipitation"), type="re")
-temp.ntv.plot<- plot(var.plot, colors="darkseagreen3")
+precip.ntv.plot<- plot(var.plot, colors="darkseagreen3")
 
 #Saving the plot as a png
 png("figures/precip_oc_prop_ntv_green.jpg", width=10, height= 10, units='in', res=300)
-temp.ntv.plot
+precip.ntv.plot
 dev.off()
 
 #model validation

@@ -1,25 +1,4 @@
-
-
-########## Spatial correlation #########
-#load non-rac model
-mod <- readRDS("models/invsev.mod.RDS")
-
-#calc residuals
-resids.calc <- resid(mod)
-sp.dat <- dat %>%
-  mutate(resid = resids.calc)
-
-#generate sp object
-sp <- ncf::spline.correlog(x = as.numeric(sp.dat$latitude),
-                           y = as.numeric(sp.dat$longitude),
-                           z = as.numeric(sp.dat$resid),
-                           xmax = 400, resamp = 10, latlon=TRUE)
-#save figure
-png(filename, width = 10, height = 10, units = 'in', res = 300)
-plot(sp)
-dev.off()
-
-
+#additional functions for N-fixing project
 
 ###########################
 ##### Data exploration ####
@@ -73,6 +52,59 @@ panel.cor <- function(x, y, digits=1, prefix="", cex.cor = 6)
 }
 
 #Mypairs(dat[, cont.var])
+
+
+
+########## Spatial correlation #########
+
+correlogram <- function(mod, dat, filename){  
+  #calc residuals
+  resids.calc <- resid(mod)
+  sp.dat <- dat %>%
+    mutate(resid = resids.calc)
+  
+  #generate sp object
+  sp <- ncf::spline.correlog(x = as.numeric(sp.dat$latitude),
+                             y = as.numeric(sp.dat$longitude),
+                             z = as.numeric(sp.dat$resid),
+                             xmax = 4000, resamp = 100, latlon=TRUE)
+  #save figure
+  png(filename, width = 10, height = 10, units = 'in', res = 300)
+  plot(sp)
+  dev.off()
+  
+}
+
+Spat.cor <- function(mod,dat,dist) {
+  coords <- cbind(dat$longitude, dat$latitude)
+  matrix.dist = as.matrix(dist(cbind(dat$longitude, dat$latitude)))
+  matrix.dist[1:10, 1:10]
+  matrix.dist.inv <- 1/matrix.dist
+  matrix.dist.inv[1:10, 1:10]
+  diag(matrix.dist.inv) <- 0
+  matrix.dist.inv[1:10, 1:10]
+  myDist = dist
+  # calculate residuals autocovariate (RAC)
+  rac <- autocov_dist(resid(mod), coords, nbs = myDist, type = "inverse", zero.policy = TRUE, style = "W", longlat=T)
+  return(rac)
+}
+#Spat.cor(mod,dat,2000)
+
+Spat.cor.rep <- function(mod,dat,dist) {
+  coords <- cbind(dat$longitude, dat$latitude)+matrix(runif(2*nrow(dat), 0, 0.00001), nrow = nrow(dat), ncol = 2)
+  matrix.dist = as.matrix(dist(cbind(dat$longitude, dat$latitude)))
+  matrix.dist[1:10, 1:10]
+  matrix.dist.inv <- 1/matrix.dist
+  matrix.dist.inv[1:10, 1:10]
+  diag(matrix.dist.inv) <- 0
+  matrix.dist.inv[1:10, 1:10]
+  myDist = dist
+  # calculate residuals autocovariate (RAC)
+  rac <- autocov_dist(resid(mod), coords, nbs = myDist, type = "inverse", zero.policy = TRUE, style = "W", longlat=T)
+  return(rac)
+}
+#Spat.cor.rep(mod,dat,2000)
+
 
 ###########################
 #### Model validation #####
@@ -161,12 +193,7 @@ disp_check <- function(mod,dat) {
 #plotResiduals(simulationOutput, form = dat$var2) #independence categorical
 #plotQQunif(simulationOutput) #qqplot
 
-###########################
-##### Model selection #####
-###########################
 
-#step(mod) #automated backward selection
-#drop1(mod) #test whether vars matter
 
 ###########################
 #### Other useful code ####
@@ -179,33 +206,3 @@ disp_check <- function(mod,dat) {
 #anova(M1, M2, test = "F")
 
 #100 * sum(dat$var== 0) / nrow(dat) #count zeros in dataset
-
-Spat.cor <- function(mod,dat,dist) {
-  coords <- cbind(dat$longitude, dat$latitude)
-  matrix.dist = as.matrix(dist(cbind(dat$longitude, dat$latitude)))
-  matrix.dist[1:10, 1:10]
-  matrix.dist.inv <- 1/matrix.dist
-  matrix.dist.inv[1:10, 1:10]
-  diag(matrix.dist.inv) <- 0
-  matrix.dist.inv[1:10, 1:10]
-  myDist = dist
-  # calculate residuals autocovariate (RAC)
-  rac <- autocov_dist(resid(mod), coords, nbs = myDist, type = "inverse", zero.policy = TRUE, style = "W", longlat=T)
-  return(rac)
-}
-#Spat.cor(mod,dat,2000)
-
-Spat.cor.rep <- function(mod,dat,dist) {
-  coords <- cbind(dat$longitude, dat$latitude)+matrix(runif(2*nrow(dat), 0, 0.00001), nrow = nrow(dat), ncol = 2)
-  matrix.dist = as.matrix(dist(cbind(dat$longitude, dat$latitude)))
-  matrix.dist[1:10, 1:10]
-  matrix.dist.inv <- 1/matrix.dist
-  matrix.dist.inv[1:10, 1:10]
-  diag(matrix.dist.inv) <- 0
-  matrix.dist.inv[1:10, 1:10]
-  myDist = dist
-  # calculate residuals autocovariate (RAC)
-  rac <- autocov_dist(resid(mod), coords, nbs = myDist, type = "inverse", zero.policy = TRUE, style = "W", longlat=T)
-  return(rac)
-}
-#Spat.cor.rep(mod,dat,2000)
