@@ -17,7 +17,6 @@ gdat.ref <- readRDS("data/fulldata_for_analysis_2024.rds") %>%
   dplyr::select(c("entity_ID","entity_class","nfix","nfixno", "latitude","abs.lat","longitude", # Select columns
                   "landtype","status","presence","area","elev_range","precipitation","dist", "temperature","urbanland")) 
 
-
 #### M1 Broad Presence (across islands and mainlands including native and naturalized floras)####
 
 #dataset for broad presence model including mainlands
@@ -37,7 +36,6 @@ Mypairs(dat[,cont.var]) # area and elevation range 0.57, abs.lat and temperature
 
 
 #### M1 Broad Presence (across islands and mainlands including native and naturalized floras)
-
 broad.pres.model.full<- glm(presence~landtype*status+abs.lat+area+elev_range+precipitation+temperature, data =gdat.ml.pres, family= binomial(link ="logit"))
 summary(broad.pres.model.full)
 
@@ -57,7 +55,7 @@ ref.land.stat <- lsmeans(broad.pres.model,pairwise~landtype*status, data= gdat.m
 ref.table.land.stat <- as.data.frame(ref.land.stat$lsmeans) 
 
 #Correlogram to test distance of spatial autocorrelation
-correlogram(broad.pres.model, gdat.ml.pres, "figures/broadprescorrelogram.jpg")
+correlogram(broad.pres.model, gdat.ml.pres, "figures/M1_broadpres_correlogram.jpg")
 
 #model including spatial correlation variable (rac)
 rac <- Spat.cor.rep(broad.pres.model,gdat.ml.pres,2000)
@@ -138,7 +136,7 @@ broad.pres.ntz<-
 broad.pres.ntz
 
 #Saving the plot as a png
-png("figures/naturalized_broad_presence_mainland.jpg", width=10, height= 12, units='in', res=300)
+png("figures/M1_broad_presence_naturalized.jpg", width=10, height= 12, units='in', res=300)
 broad.pres.ntz
 dev.off()
 
@@ -178,7 +176,7 @@ broad.pres.ntv<-
 broad.pres.ntv
 
 #Saving the plot as a png
-png("figures/native_broad_presence_mainland.jpg", width=10, height= 12, units='in', res=300)
+png("figures/M1_native_broad_presence.jpg", width=10, height= 12, units='in', res=300)
 broad.pres.ntv
 dev.off()
 
@@ -204,15 +202,11 @@ cont.var <- c("abs.lat", "elev_range","area","precipitation","temperature")
 Mypairs(dat[,cont.var]) # area and elevation range 0.54, abs.lat and temperature 0.87
 
 #### M2 Model Broad Proportion across islands and mainlands including native and naturalized flora 
-
 broad.prop.model<- glmer(cbind(nfix,nfixno)~landtype*status+abs.lat+area+elev_range+precipitation+temperature+ (1|entity_ID), data =gdat.ml.prop, family= binomial(link ="logit"))
 summary(broad.prop.model)
 
 ref.land.stat <- lsmeans(broad.prop.model,pairwise~landtype*status, data= gdat.ml.prop, type="response")
 ref.table.land.stat <- as.data.frame(ref.land.stat$lsmeans) 
-
-#Correlogram to test distance of spatial autocorrelation
-correlogram(broad.prop.model, gdat.ml.prop, "figures/broadpropcorrelogram.jpg")
 
 #model including spatial correlation variable (rac)
 rac <- Spat.cor.rep(broad.prop.model,gdat.ml.prop,2000)
@@ -226,6 +220,9 @@ summary(broad.prop.model)
 ref.land.stat <- lsmeans(broad.prop.model,pairwise~landtype*status, data= gdat.ml.prop, type="response")
 ref.table.land.stat <- as.data.frame(ref.land.stat$lsmeans) 
 
+#Correlogram to test distance of spatial autocorrelation
+correlogram(broad.prop.model, gdat.ml.prop, "figures/M2_broadprop_correlogram.jpg")
+
 #M2 including spatial correlation variable (rac)
 rac <- Spat.cor.rep(broad.prop.model,gdat.ml.prop,2000)
 broad.prop.model.rac <- glm(cbind(nfix,nfixno)~landtype*status+abs.lat+area+elev_range+precipitation+rac, data = gdat.ml.prop, family = binomial(link ="logit")) #has to be exactly the same as the model but with +rac
@@ -237,9 +234,6 @@ gdat.ml.prop$rac <- rac
 ref.land.stat.rac<-lsmeans(broad.prop.model.rac,pairwise~landtype*status, data = gdat.ml.prop, type="response")
 ref.table.land.stat.rac<-as.data.frame(ref.land.stat.rac$lsmeans) 
 
-
-
-####take out for test####
 #test zero inflation:
 testZeroInflation(broad.prop.model.rac)
 #test dispersion:
@@ -326,14 +320,13 @@ broadpropntz<-
 broadpropntz
 
 #Saving the plot as a png
-png("figures/broad_proportion_naturalized.jpg", width=10, height= 10, units='in', res=300)
+png("figures/M2_broad_proportion_naturalized.jpg", width=10, height= 10, units='in', res=300)
 broadpropntz
 dev.off()
 
 
 #Native plot
 ref.table.land.stat.rac.ntv <- ref.table.land.stat.rac%>%filter(status=="native") #subset lsmeans to only include naturalized for plot 
-
 
 #Create a custom color scale
 colScale <- scale_colour_manual(values=c("darkseagreen3","darkseagreen3"))
@@ -366,9 +359,10 @@ broadpropntv<-
 broadpropntv
 
 #Saving the plot as a png
-png("figures/broad_proportion_ntv.jpg", width=10, height= 10, units='in', res=300)
+png("figures/M2_broad_proportion_native.jpg", width=10, height= 10, units='in', res=300)
 broadpropntv
 dev.off()
+
 
 ####Data only including NATURALIZED species on OCEANIC ISLANDS (M3,M4)####
 
@@ -379,7 +373,7 @@ gdat.isl.ntz <- gdat.ref %>%
   filter(status=="naturalized")%>%
   mutate(area = as.vector(log10((area)+.01)))%>%  #log10 transformation of area for models only; remove for figures
   filter(landtype=="oceanic")%>%
-  drop_na() %>%
+  drop_na()%>%
   mutate_at(c("abs.lat","area","dist","elev_range","precipitation", "temperature","urbanland"), scale)#%>%  #scale all explanatory variables
 
 
@@ -395,9 +389,6 @@ Mypairs(dat[,cont.var]) # area and elevation range 0.72, abs.lat and temperature
 model.oc.pres.full<- glm(presence~abs.lat +area +dist +elev_range	+precipitation+temperature +urbanland	+area:dist +urbanland:dist, data=gdat.isl.ntz, family=binomial(link ="logit"))
 summary(model.oc.pres.full)
 
-#Correlogram to test distance of spatial autocorrelation
-correlogram(model.oc.pres.full, gdat.isl.ntz, "figures/ntzocprescorrelogram.jpg")
-
 #model including spatial correlation variable (rac)
 rac <- Spat.cor.rep(model.oc.pres.full,gdat.isl.ntz,2000)
 model.oc.pres.rac.full <- glm(presence~abs.lat +area +dist +elev_range+precipitation+ temperature +urbanland+area:dist +urbanland:dist+rac, data = gdat.isl.ntz, family = binomial(link ="logit")) #has to be exactly the same as the model but with +rac
@@ -406,6 +397,9 @@ summary(model.oc.pres.rac.full)
 #11.10. test without any correlations remove temperature and elev_range bc of correlation, then stepwise regression
 testcorrelationmodel<- glm(presence~abs.lat +area+area:dist, data = gdat.isl.ntz, family = binomial(link ="logit"))
 summary(testcorrelationmodel)
+
+#Correlogram to test distance of spatial autocorrelation
+correlogram(model.oc.pres.full, gdat.isl.ntz, "figures/M3_ntzocpres_correlogram.jpg")
 
 #model including spatial correlation variable (rac)
 rac <- Spat.cor.rep(testcorrelationmodel,gdat.isl.ntz,2000)
@@ -453,7 +447,6 @@ effect.plot
 
 
 #Figure area:distance interaction
-
 #create a color scale
 colScale <- scale_colour_manual(values =c ("coral","coral2","coral3","sandybrown"))
 fillScale <- scale_fill_manual(values =c ("coral","coral2","coral3","coral"))
@@ -498,7 +491,7 @@ areadist_oc_pres_ntz_plot<- ggplot(pdat, aes(x = dist, y = fit, fill=size, color
 areadist_oc_pres_ntz_plot
 
 #Saving the plot as a png
-png("figures/M3areadist_oc_pres_ntz_orange.jpg", width=10, height= 10, units='in', res=300)
+png("figures/M3_areadist_interaction.jpg", width=10, height= 10, units='in', res=300)
 areadist_oc_pres_ntz_plot
 dev.off()
 
@@ -518,7 +511,6 @@ Mypairs(oceanic.prop[,cont.var]) # area and elevation range 0.74, abs.lat temper
 
 
 #####M4  naturalized proportion on oceanic islands
-
 model.oc.prop.full<- glm(cbind(nfix,nfixno)~abs.lat +area +dist +elev_range	+precipitation+temperature +urbanland	+area:dist +urbanland:dist, data=oceanic.prop, family=binomial(link ="logit"))
 summary(model.oc.prop.full)
 
@@ -532,7 +524,7 @@ model.oc.prop<- glm(cbind(nfix,nfixno)~abs.lat +area +dist +elev_range+urbanland
 summary(model.oc.prop)
 
 #Correlogram to test distance of spatial autocorrelation
-correlogram(model.oc.prop, oceanic.prop, "figures/ntzocpropcorrelogram.jpg")
+correlogram(model.oc.prop, oceanic.prop, "figures/M4_ntzocprop_correlogram.jpg")
 
 #model including spatial correlation variable (rac)
 rac <- Spat.cor.rep(model.oc.prop,oceanic.prop,2000)
@@ -569,7 +561,7 @@ landuse.plot<- plot(var.plot, colors="coral")
 landuse.plot
 
 #Saving the plot as a png
-png("figures/humanlanduse_oc_pres_ntz_orange.jpg", width=10, height= 10, units='in', res=300)
+png("figures/M4_landuse_oc_pres_ntz.jpg", width=10, height= 10, units='in', res=300)
 landuse.plot
 dev.off()
 
@@ -590,7 +582,6 @@ gdat.isl.ntv <- gdat.ref %>%
 
 ####M5 presence of native N-fixing species on oceanic islands####
 
-
 #create data subset for presence analysis
 oceanic.pres.ntv <- gdat.isl.ntv%>%
   filter(!entity_ID == "594")# one data point removed due to extreme residual outlier status (see below)
@@ -606,7 +597,7 @@ model.oc.pres.full <- glm(presence~abs.lat + area + dist +elev_range +precipitat
 summary(model.oc.pres.full)
 
 #Correlogram to test distance of spatial autocorrelation
-correlogram(model.oc.pres, oceanic.pres.ntv, "figures/ntvocprescorrelogram.jpg")
+correlogram(model.oc.pres.full, oceanic.pres.ntv, "figures/M5_ntvocpres_correlogram.jpg")
 
 #model including spatial correlation variable (rac)
 rac <- Spat.cor.rep(model.oc.pres.full,oceanic.pres.ntv,2000)
@@ -651,7 +642,6 @@ plot(E2 ~ precipitation, data = oceanic.pres.ntv)
 # pinpoint the outlier: entity_ID = 594
 outlier <- oceanic.pres.ntv %>% filter(abs.lat < -1) %>% filter(dist < 1.1 & dist > 0.9) %>% filter(area < 1.1 & area > 0.9)
 
-
 var.plot<- ggeffect(model.oc.pres.rac, terms=c("area"), type="re")
 plot(var.plot)
 
@@ -660,7 +650,7 @@ precip.ntv.plot<- plot(var.plot, colors="darkseagreen3")
 precip.ntv.plot
 
 #Saving the plot as a png
-png("figures/precip_oc_pres_ntv.jpg", width=10, height= 10, units='in', res=300)
+png("figures/M5_precip_oc_pres_ntv.jpg", width=10, height= 10, units='in', res=300)
 precip.ntv.plot
 dev.off()
 
@@ -687,7 +677,7 @@ oc_pres_native_dist_plot<-ggplot(pred.ml, aes(x = dist, y = fit))+
 oc_pres_native_dist_plot
 
 #Saving the plot as a png
-png("figures/dist_oc_pres_native.jpg", width=10, height= 10, units='in', res=300)
+png("figures/M5_dist_oc_pres_ntv.jpg", width=10, height= 10, units='in', res=300)
 oc_pres_native_dist_plot
 dev.off()
 
@@ -716,7 +706,7 @@ model.oc.prop<- glm(cbind(nfix,nfixno)~abs.lat+area +dist +precipitation + area:
 summary(model.oc.prop)
 
 #Correlogram to test distance of spatial autocorrelation
-correlogram(model.oc.prop, oceanic.prop.ntv, "figures/ntvocpropcorrelogram.jpg")
+correlogram(model.oc.prop, oceanic.prop.ntv, "figures/M6_ntvocprop_correlogram.jpg")
 
 #model including spatial correlation variable (rac)
 rac <- Spat.cor.rep(model.oc.prop,oceanic.prop.ntv,2000)
@@ -752,7 +742,6 @@ E2 <- resid(model.oc.prop.rac, type = "pearson")
 plot(E2 ~ abs.lat, data = oceanic.prop.ntv)
 #outlier in precipitation
 
-
 #var.plot<- ggeffect(model.oc.prop.rac, terms=c("temperature"), type="re")
 #temp.ntv.plot<- plot(var.plot, colors="darkseagreen3")
 
@@ -766,7 +755,7 @@ var.plot<- ggeffect(model.oc.prop.rac, terms=c("precipitation"), type="re")
 precip.ntv.plot<- plot(var.plot, colors="darkseagreen3")
 
 #Saving the plot as a png
-png("figures/precip_oc_prop_ntv_green.jpg", width=10, height= 10, units='in', res=300)
+png("figures/M6_precip_oc_prop_ntv.jpg", width=10, height= 10, units='in', res=300)
 precip.ntv.plot
 dev.off()
 
@@ -786,7 +775,7 @@ var.plot<- ggeffect(model.oc.prop.rac, terms=c("dist","area"), type="re")
 areadist.ntv.plot<-plot(var.plot)
 
 #Saving the plot as a png
-png("figures/areadist_oc_prop_ntv_orange.jpg", width=10, height= 10, units='in', res=300)
+png("figures/M6_areadist_oc_prop_ntv.jpg", width=10, height= 10, units='in', res=300)
 areadist.ntv.plot
 dev.off()
 
@@ -838,7 +827,7 @@ areadist_oc_pres_ntv_plot<- ggplot(pdat, aes(x = dist, y = fit, fill=size, color
 areadist_oc_pres_ntv_plot
 
 #Saving the plot as a png
-png("figures/areadist_oc_pres_ntv.jpg", width=10, height= 10, units='in', res=300)
+png("figures/M6_areadist_interaction.jpg", width=10, height= 10, units='in', res=300)
 areadist_oc_pres_ntv_plot
 dev.off()
 
@@ -899,7 +888,7 @@ combined.plot.oc.pres<- ggplot(pres.comb.var.impo3, aes(x=variable, y=partialrsq
 combined.plot.oc.pres
 
 #Saving the plot as a png
-png("figures/var_imp_oc_pres_combined_n.jpg", width=10, height= 10, units='in', res=300)
+png("figures/M3M5_var_imp_oc_pres.jpg", width=10, height= 10, units='in', res=300)
 combined.plot.oc.pres
 dev.off()
 
@@ -951,7 +940,7 @@ combined.plot.oc.prop<- ggplot(comb.var.impo3, aes(x=variable, y=partialrsq, fil
 combined.plot.oc.prop
 
 #Saving the plot as a png
-png("figures/var_imp_oc_prop_combinedsc_october24.jpg", width=10, height= 10, units='in', res=300)
+png("figures/M4M6_var_imp_oc_prop.jpg", width=10, height= 10, units='in', res=300)
 combined.plot.oc.prop
 dev.off()
 

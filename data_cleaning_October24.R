@@ -1,11 +1,10 @@
 #13.10.2024
 #Linda Mueller
 
-## TO DO:
-#1. what is causing NA in entity_class: location in glonaf not in gift?
 
-###!!!! RUN NATIVE BLOCK, SAVE, CLEAR, THEN SAME FOR NATURALIZED
+###structure; run datacleaning for native species, save resulting dataset, clear workspace, then repeat for naturalized species and combine the two
 
+#load libraries
 library(tidyverse)
 library(tidyr)
 
