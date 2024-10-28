@@ -47,7 +47,7 @@ rac <- Spat.cor.rep(broad.pres.model.full,gdat.ml.pres,2000)
 broad.pres.model.rac.full <- glm(presence~landtype*status+abs.lat+area+elev_range+precipitation+temperature+rac, data = gdat.ml.pres, family = binomial(link ="logit")) #has to be exactly the same as the model but with +rac
 summary(broad.pres.model.rac.full)
 
-#M1 with only selected variables after stepwise regression
+#M1 with only selected variables after stepwise regression without correlated variables
 broad.pres.model<- glm(presence~landtype*status+abs.lat+area+elev_range, data =gdat.ml.pres, family= binomial(link ="logit"))
 summary(broad.pres.model)
 
@@ -202,7 +202,7 @@ cont.var <- c("abs.lat", "elev_range","area","precipitation","temperature")
 Mypairs(dat[,cont.var]) # area and elevation range 0.54, abs.lat and temperature 0.87
 
 #### M2 Model Broad Proportion across islands and mainlands including native and naturalized flora 
-broad.prop.model<- glmer(cbind(nfix,nfixno)~landtype*status+abs.lat+area+elev_range+precipitation+temperature+ (1|entity_ID), data =gdat.ml.prop, family= binomial(link ="logit"))
+broad.prop.model<- glm(cbind(nfix,nfixno)~landtype*status+abs.lat+area+elev_range+precipitation+temperature, data =gdat.ml.prop, family= binomial(link ="logit"))
 summary(broad.prop.model)
 
 ref.land.stat <- lsmeans(broad.prop.model,pairwise~landtype*status, data= gdat.ml.prop, type="response")
@@ -212,6 +212,18 @@ ref.table.land.stat <- as.data.frame(ref.land.stat$lsmeans)
 rac <- Spat.cor.rep(broad.prop.model,gdat.ml.prop,2000)
 broad.prop.model.rac <- glm(cbind(nfix,nfixno)~landtype*status+abs.lat+area+elev_range+precipitation+ temperature+rac, data = gdat.ml.prop, family = binomial(link ="logit")) #has to be exactly the same as the model but with +rac
 summary(broad.prop.model.rac)
+
+
+#testing model without any correlations
+broad.prop.model<- glm(cbind(nfix,nfixno)~landtype*status+temperature+area+precipitation, data =gdat.ml.prop, family= binomial(link ="logit"))
+summary(broad.prop.model)
+
+#model including spatial correlation variable (rac)
+rac <- Spat.cor.rep(broad.prop.model,gdat.ml.prop,2000)
+broad.prop.model.rac <- glm(cbind(nfix,nfixno)~landtype*status+temperature+area+precipitation+rac, data = gdat.ml.prop, family = binomial(link ="logit")) #has to be exactly the same as the model but with +rac
+summary(broad.prop.model.rac)
+
+
 
 #M2 with only selected variables after stepwise regression
 broad.prop.model<- glm(cbind(nfix,nfixno)~landtype*status+abs.lat+area+elev_range+precipitation, data =gdat.ml.prop, family= binomial(link ="logit"))
@@ -395,7 +407,7 @@ model.oc.pres.rac.full <- glm(presence~abs.lat +area +dist +elev_range+precipita
 summary(model.oc.pres.rac.full)
 
 #11.10. test without any correlations remove temperature and elev_range bc of correlation, then stepwise regression
-testcorrelationmodel<- glm(presence~abs.lat +area+area:dist, data = gdat.isl.ntz, family = binomial(link ="logit"))
+testcorrelationmodel<- glm(presence~abs.lat +area+dist+area:dist, data = gdat.isl.ntz, family = binomial(link ="logit"))
 summary(testcorrelationmodel)
 
 #Correlogram to test distance of spatial autocorrelation
@@ -403,7 +415,7 @@ correlogram(model.oc.pres.full, gdat.isl.ntz, "figures/M3_ntzocpres_correlogram.
 
 #model including spatial correlation variable (rac)
 rac <- Spat.cor.rep(testcorrelationmodel,gdat.isl.ntz,2000)
-model.oc.pres.ntz.rac <- glm(presence~abs.lat +area+area:dist+rac, data = gdat.isl.ntz, family = binomial(link ="logit")) #has to be exactly the same as the model but with +rac
+model.oc.pres.ntz.rac <- glm(presence~abs.lat +area+dist+area:dist+rac, data = gdat.isl.ntz, family = binomial(link ="logit")) #has to be exactly the same as the model but with +rac
 summary(model.oc.pres.ntz.rac)
 
 
@@ -518,6 +530,18 @@ summary(model.oc.prop.full)
 rac <- Spat.cor.rep(model.oc.prop.full,oceanic.prop,2000)
 model.oc.prop.rac.full <- glm(cbind(nfix,nfixno)~abs.lat +area +dist +elev_range+precipitation+temperature +urbanland	+area:dist +urbanland:dist+rac, data = oceanic.prop, family = binomial(link ="logit"))
 summary(model.oc.prop.rac.full)
+
+#M4 with only selected variables after stepwise regression no correlations
+model.oc.prop<- glm(cbind(nfix,nfixno)~abs.lat +area+dist +urbanland, data=oceanic.prop, family=binomial(link ="logit"))
+summary(model.oc.prop)
+
+#Correlogram to test distance of spatial autocorrelation
+#correlogram(model.oc.prop, oceanic.prop, "figures/M4_ntzocprop_correlogram.jpg")
+
+#model including spatial correlation variable (rac)
+rac <- Spat.cor.rep(model.oc.prop,oceanic.prop,2000)
+model.oc.prop.rac <- glm(cbind(nfix,nfixno)~abs.lat +area+ dist+urbanland +rac, data = oceanic.prop, family = binomial(link ="logit")) #has to be exactly the same as the model but with +rac
+summary(model.oc.prop.rac)
 
 #M4 with only selected variables after stepwise regression
 model.oc.prop<- glm(cbind(nfix,nfixno)~abs.lat +area +dist +elev_range+urbanland, data=oceanic.prop, family=binomial(link ="logit"))
@@ -702,7 +726,7 @@ Mypairs(dat[,cont.var]) # area and elevation range 0.72, abs.lat and temperature
 
 #####M6 Model proportion of native N-fixing species on oceanic islands
 
-model.oc.prop<- glm(cbind(nfix,nfixno)~abs.lat+area +dist +precipitation + area:dist, data=oceanic.prop.ntv, family=binomial(link ="logit"))
+model.oc.prop<- glm(cbind(nfix,nfixno)~temperature+area +dist +precipitation + area:dist, data=oceanic.prop.ntv, family=binomial(link ="logit"))
 summary(model.oc.prop)
 
 #Correlogram to test distance of spatial autocorrelation
@@ -710,11 +734,33 @@ correlogram(model.oc.prop, oceanic.prop.ntv, "figures/M6_ntvocprop_correlogram.j
 
 #model including spatial correlation variable (rac)
 rac <- Spat.cor.rep(model.oc.prop,oceanic.prop.ntv,2000)
-model.oc.prop.rac <- glm(cbind(nfix,nfixno)~abs.lat +area +dist  +precipitation + area:dist+rac, data = oceanic.prop.ntv, family = binomial(link ="logit")) #has to be exactly the same as the model but with +rac
+model.oc.prop.rac <- glm(cbind(nfix,nfixno)~temperature +area +dist  +precipitation + area:dist+rac, data = oceanic.prop.ntv, family = binomial(link ="logit")) #has to be exactly the same as the model but with +rac
 summary(model.oc.prop.rac)
+
+#old version with correlations
+model.oc.prop<- glm(cbind(nfix,nfixno)~abs.lat+area +dist +precipitation+temperature + area:dist, data=oceanic.prop.ntv, family=binomial(link ="logit"))
+summary(model.oc.prop)
+
+#Correlogram to test distance of spatial autocorrelation
+correlogram(model.oc.prop, oceanic.prop.ntv, "figures/M6_ntvocprop_correlogram.jpg")
+
+#model including spatial correlation variable (rac)
+rac <- Spat.cor.rep(model.oc.prop,oceanic.prop.ntv,2000)
+model.oc.prop.rac <- glm(cbind(nfix,nfixno)~abs.lat+area +dist +precipitation+temperature + area:dist+rac, data = oceanic.prop.ntv, family = binomial(link ="logit")) #has to be exactly the same as the model but with +rac
+summary(model.oc.prop.rac)
+
 
 #check variance inflation factor (should be below 5 for all variables)
 vif(model.oc.prop.rac)
+
+#different ways of calculating R2
+r.squaredGLMM(model.oc.prop.rac)
+
+1-model.oc.prop.rac$deviance/model.oc.prop.rac$null.deviance
+
+library(glmtoolbox)
+
+adjR2(model.oc.prop.rac)
 
 #variable importance using Rsquared and partial Rsquared
 rsq(model.oc.prop.rac)
@@ -896,8 +942,8 @@ dev.off()
 
 #naturalized
 vrsq.ntz<- cbind(prsq.oc.prop.ntz$variable, prsq.oc.prop.ntz$partial.rsq) #create dataframe for plot
-vrsq.ntz.zeros<- data.frame(V1 = c("precipitation","temperature","area:dist"),
-                            V2 = c(0,0,0))
+vrsq.ntz.zeros<- data.frame(V1 = c("precipitation","temperature","area:dist","elev_range"),
+                            V2 = c(0,0,0,0))
 
 vrsq.ntz.new<- rbind(vrsq.ntz,vrsq.ntz.zeros)
 status<- c("naturalized","naturalized","naturalized","naturalized","naturalized","naturalized","naturalized","naturalized","naturalized") #create column with status for each variable
@@ -907,7 +953,7 @@ var.impo.ntz.norac <- data.frame(var.impo.ntz%>%filter(!var.impo.ntz$V1=="rac"))
 
 #native
 vrsq.ntv<- cbind(prsq.oc.prop.ntv$variable, prsq.oc.prop.ntv$partial.rsq)
-vrsq.ntv.zeros<- data.frame(V1 = c("urbanland","elev_range","temperature"),
+vrsq.ntv.zeros<- data.frame(V1 = c("urbanland","elev_range","abs.lat"),
                             V2 = c(0,0,0))
 
 vrsq.ntv.new<- rbind(vrsq.ntv,vrsq.ntv.zeros)

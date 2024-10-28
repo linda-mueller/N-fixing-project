@@ -28,7 +28,7 @@ geo <- geo.ref %>%
 ndat <- read.csv("data/Werner_NFix.csv", header = TRUE) %>%                                   
   dplyr::select(c("species", "family", "data_fixing"))                                            
 
-species <- readRDS("data/GIFT_species_Aug_2023.rds") %>%
+species <- read.csv("data/GIFT_EXT_species_Aug_2023.csv") %>%
   dplyr::select("entity_ID",'species','family') %>%
   filter(entity_ID %in% geo$entity_ID)
 
@@ -211,8 +211,9 @@ geo <- geo %>%
 dat <- species %>% left_join(ndat, by = c("species", "family")) %>%                       # Merge species and ndat, keep all unassigned species
   left_join(geo, by = "entity_ID") %>%                                                    # Merge species2 with geo
   group_by(entity_ID) %>% distinct(species, .keep_all = TRUE) %>%                         # Remove duplicates of species within each region
-  ungroup() 
-                                                                            # Ungroup
+  ungroup() # Ungroup
+                                                                            
+
 #Species counts
 #---------------------------
 #Count N-fixing per entity
@@ -315,9 +316,9 @@ rm(list = ls(all.names = TRUE))
 
 ####JOIN NATIVE AND NATURALIZED #################################################################
 
-native.drivers <- readRDS("data/Nfixdrivers_speciesnative_2023.rds") %>%
+native.drivers <- readRDS("data/Nfixdrivers_speciesnative_2024.rds") %>%
   rename(nfix = Nfixnum, nfixno = noNfixnum)
-naturalized.drivers <- readRDS("data/Nfixdrivers_speciesnaturalized_2023.rds") %>%
+naturalized.drivers <- readRDS("data/Nfixdrivers_speciesnaturalized_2024.rds") %>%
   dplyr::select("entity_ID","Nfixnum","noNfixnum") %>% rename(nfix.inv = Nfixnum, nfixno.inv = noNfixnum)
   
 humans <- read.csv("data/geoentities_ice_LC_new.csv") %>%

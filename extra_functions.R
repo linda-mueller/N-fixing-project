@@ -58,6 +58,7 @@ panel.cor <- function(x, y, digits=1, prefix="", cex.cor = 6)
 ########## Spatial correlation #########
 
 correlogram <- function(mod, dat, filename){  
+
   #calc residuals
   resids.calc <- resid(mod)
   sp.dat <- dat %>%
@@ -67,7 +68,7 @@ correlogram <- function(mod, dat, filename){
   sp <- ncf::spline.correlog(x = as.numeric(sp.dat$latitude),
                              y = as.numeric(sp.dat$longitude),
                              z = as.numeric(sp.dat$resid),
-                             xmax = 4000, resamp = 100, latlon=TRUE)
+                             xmax = 4000, resamp = 10, latlon=TRUE)
   #save figure
   png(filename, width = 10, height = 10, units = 'in', res = 300)
   plot(sp)
@@ -193,6 +194,90 @@ disp_check <- function(mod,dat) {
 #plotResiduals(simulationOutput, form = dat$var2) #independence categorical
 #plotQQunif(simulationOutput) #qqplot
 
+#R-square function
+
+r2_glm <- function(response, formula, dat) {
+  
+  # Fit the full model with all variables
+  full_model <- glm(formula = formula, data = dat, family = binomial(link ="logit"))
+  
+  # Fit the null model (intercept only)
+  null_model <- glm(response ~ 1, data = dat, family = binomial(link ="logit"))
+  
+  # Get deviances
+  deviance_full <- deviance(full_model)
+  deviance_null <- deviance(null_model)
+  
+  # Calculate R square
+  R2<- (deviance_null - deviance_full) / deviance_null
+  
+  return(R2)
+}
+
+
+#Partial R-square function
+
+partial_r2_glm <- function(response, formula, dat, variable) {
+  
+  # Ensure the variable exists in the formula
+  if (!variable %in% all.vars(formula)) {
+    stop(paste("Variable", variable, "not found in the model formula."))
+  }
+  
+  # Fit the full model with all variables
+  full_model <- glm(formula = formula, data = dat, family = binomial(link ="logit"))
+  
+  # Create the reduced formula by removing the specified variable
+  reduced_formula <- update(formula, paste(". ~ . -", variable))
+  
+  # Fit the reduced model without the specified variable
+  reduced_model <- glm(formula = reduced_formula, data = dat, family = binomial(link ="logit"))
+  
+  # Get deviances
+  deviance_full <- deviance(full_model)
+  deviance_reduced <- deviance(reduced_model)
+
+  # Calculate partial R2
+  partial_R2 <- (deviance_reduced - deviance_full) / deviance_reduced
+
+  return(partial_R2)
+}
+
+
+partial_r2_glm_list <- function(response, formula, dat, variable_list) {
+  
+  # Initialize an empty list to store the partial R^2 results
+  partial_r2_list <- list()
+  
+  for (variable in variable_list) {
+    # Ensure the variable exists in the formula
+    if (!grepl(variable, paste(deparse(formula), collapse = " "))) {
+      warning(paste("Variable or interaction term", variable, "not found in the model formula. Skipping."))
+      next
+    }
+  
+  # Fit the full model with all variables
+  full_model <- glm(formula = formula, data = dat, family = binomial(link ="logit"))
+  
+  # Create the reduced formula by removing the specified variable
+  reduced_formula <- update(formula, paste(". ~ . -", variable))
+  
+  # Fit the reduced model without the specified variable
+  reduced_model <- glm(formula = reduced_formula, data = dat, family = binomial(link ="logit"))
+  
+  # Get deviances
+  deviance_full <- deviance(full_model)
+  deviance_reduced <- deviance(reduced_model)
+  
+  # Calculate partial R2
+  partial_R2 <- (deviance_reduced - deviance_full) / deviance_reduced
+  
+  # Store the partial R2 in the list, using the variable name as the key
+  partial_r2_list[[variable]] <- partial_R2
+  }
+  
+  return(partial_r2_list)
+}
 
 
 ###########################
