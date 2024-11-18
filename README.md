@@ -4,5 +4,5 @@ This data repository contains the R-scripts for data cleaning and data analysis 
 
 Usage:
 
-Create an R-Project folder and copy all scripts and datasets in there. First run the data cleaning script, to recreate all datasets later used in the data analysis. 
+Create an R-Project folder and copy all scripts and datasets in there. First run the data cleaning script, to recreate all datasets, which are later used in the data analysis. 
 Next, run the data analysis script to get all model results and recreate figures. It is also possible to directly run the data analysis script with the provided datasets.
