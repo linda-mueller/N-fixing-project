@@ -8,7 +8,6 @@
 #Mixed effects models and extensions in ecology with R. (2009).
 #Zuur, AF, Ieno, EN, Walker, N, Saveliev, AA, and Smith, GM. Springer.
 
-#cont.var <- c("var1","var2")
 #Outliers
 Mydotplot <- function(DataSelected){
   P <- dotplot(as.matrix(as.matrix(DataSelected)),
@@ -68,7 +67,7 @@ correlogram <- function(mod, dat, filename){
   sp <- ncf::spline.correlog(x = as.numeric(sp.dat$latitude),
                              y = as.numeric(sp.dat$longitude),
                              z = as.numeric(sp.dat$resid),
-                             xmax = 4000, resamp = 10, latlon=TRUE)
+                             xmax = 4000, resamp = 100, latlon=TRUE)
   #save figure
   png(filename, width = 10, height = 10, units = 'in', res = 300)
   plot(sp)
@@ -183,7 +182,6 @@ disp_check <- function(mod,dat) {
 #### DHARMa validation ####
 ###########################
 
-#set.seed(556)
 #testDispersion(mod) #test for over/under dispersion
 #testZeroInflation(mod) #test zero inflation
 
@@ -278,16 +276,3 @@ partial_r2_glm_list <- function(response, formula, dat, variable_list) {
   
   return(partial_r2_list)
 }
-
-
-###########################
-#### Other useful code ####
-###########################
-
-#GLM generalised R^2: 
-#(null deviance - residual deviance)/ null deviance
-
-#AIC(M1, M2) #compare multiple models
-#anova(M1, M2, test = "F")
-
-#100 * sum(dat$var== 0) / nrow(dat) #count zeros in dataset

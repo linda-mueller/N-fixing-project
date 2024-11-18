@@ -1,5 +1,4 @@
 #N-fixing project: Script version November 2024
-#Author Linda Rosa Mueller
 
 ####Libraries and initial dataset####
 
