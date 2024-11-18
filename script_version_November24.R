@@ -9,7 +9,7 @@ library(MASS);library(lme4);library(lmerTest);library(lsmeans);library(ggeffects
 library(ggplot2);library(effects);library(ncf);library(ape);library(sjPlot);library(MuMIn);
 library(tidyverse);library(car); library(V8); library(DHARMa); library(broom);library(grateful)
 
-source("extra_functions.R")
+source("extra_functions.R") #load script with additional functions
 options(na.action = "na.fail") #Change na. action
 
 #Load dataset from data cleaning script
@@ -38,9 +38,6 @@ Mypairs(dat[,cont.var]) # area and elevation range 0.56, abs.lat and temperature
 #### M1 Broad Presence (across islands and mainlands including native and naturalized floras)
 broad.pres.model.full<- glm(presence~landtype*status+abs.lat+area+elev_range+precipitation+temperature, data =gdat.ml.pres, family= binomial(link ="logit"))
 summary(broad.pres.model.full)
-
-#Correlogram to test distance of spatial autocorrelation
-correlogram(broad.pres.model, gdat.ml.pres, "figures/M1_broadpres_correlogram.jpg")
 
 #model including spatial correlation variable
 rac <- Spat.cor.rep(broad.pres.model.full,gdat.ml.pres,2000)
@@ -111,7 +108,7 @@ results <- lsmeans::contrast(means,contrasts)
 results.df <- as.data.frame(results)
 results.df
 
-#Naturalized Plot 
+#M1 plot Presence naturalized flora
 gdat.ml.ntz<- gdat.ml.pres%>%filter(status=="naturalized") #subset data to only include naturalized for plot
 ref.table.land.stat.rac.ntz <- ref.table.land.stat.rac%>%filter(status=="naturalized") #subset lsmeans to only include naturalized for plot 
 
@@ -149,13 +146,13 @@ png("figures/M1_broad_presence_naturalized.jpg", width=10, height= 12, units='in
 broad.pres.ntz
 dev.off()
 
-#NATIVE PLOT  
+#M1 plot Presence native flora
 gdat.ml.ntv<- gdat.ml.pres%>%filter(status=="native") #subset data to only include native species for plot
 ref.table.land.stat.rac.ntv <- ref.table.land.stat.rac%>%filter(status=="native") #subset lsmeans to only include native for plot
 
 #Create a custom color scale
-colScale <- scale_colour_manual(values=c("darkseagreen3"))
-fillScale <- scale_fill_manual(values=c("darkseagreen3"))
+colScale <- scale_colour_manual(values=c("darkcyan"))
+fillScale <- scale_fill_manual(values=c("darkcyan"))
 
 #plot the model results for M1 presence of native flora across islands and mainlands
 broad.pres.ntv<- 
@@ -173,7 +170,7 @@ broad.pres.ntv<-
   theme_classic(base_size = 30) +
   theme(legend.justification=c(1,1), legend.position=c(1,1))+
   theme(legend.position = "top")+
-  theme(legend.key = element_rect(colour =c("darkseagreen3") ))+
+  theme(legend.key = element_rect(colour =c("darkcyan") ))+
   theme(legend.background = element_blank(),legend.box.background = element_rect(colour = "black"))+
   guides(color="none", fill = guide_legend(title="Floral status:",override.aes = list(shape = NA)))+
   theme(axis.text.y=element_text(size=50))+
@@ -259,9 +256,6 @@ plot(E2 ~ area, data = gdat.ml.prop)
 plot(E2 ~ temperature, data = gdat.ml.prop)
 plot(E2 ~ elev_range, data = gdat.ml.prop)
 
-# try variables NOT in model:
-plot(E2 ~ abs.lat, data = gdat.ml.prop)
-
 #contrasts
 means <- emmeans(broad.prop.model.rac, ~landtype*status)
 #look at means order to determine how to write contrasts:
@@ -293,7 +287,7 @@ results.df <- as.data.frame(results)
 results.df
 
 
-#Plot M2 Broad Proportion naturalized
+#M2 plot Proportion naturalized flora
 gdat.prop.ntz<- gdat.ml.prop %>% mutate(propnfix=nfix/(nfix+nfixno))%>%filter(status=="naturalized")#subset data to only include naturalized for plot
 ref.table.land.stat.rac.ntz <- ref.table.land.stat.rac%>%filter(status=="naturalized") #subset lsmeans to only include naturalized for plot 
 
@@ -329,13 +323,13 @@ broadpropntz
 dev.off()
 
 
-#Plot M2 Broad Proportion native
+#Plot M2 Proportion native flora 
 gdat.prop.ntv<- gdat.ml.prop %>% mutate(propnfix=nfix/(nfix+nfixno))%>%filter(status=="native") #subset data to only include native for plot
 ref.table.land.stat.rac.ntv <- ref.table.land.stat.rac%>%filter(status=="native") #subset lsmeans to only include native for plot 
 
 #Create a custom color scale
-colScale <- scale_colour_manual(values=c("darkseagreen3","darkseagreen3"))
-fillScale <- scale_fill_manual(values=c("darkseagreen3","darkseagreen3"))
+colScale <- scale_colour_manual(values=c("darkcyan","darkcyan"))
+fillScale <- scale_fill_manual(values=c("darkcyan","darkcyan"))
 
 broadpropntv<- 
   ggplot(ref.table.land.stat.rac.ntv, aes(x = landtype, y = lsmean, fill = status, color = status))  + 
@@ -352,7 +346,7 @@ broadpropntv<-
   theme_classic(base_size = 30) +
   theme(legend.justification=c(1,1), legend.position=c(1,1))+
   theme(legend.position = "top")+
-  theme(legend.key = element_rect(colour =c("darkseagreen3","darkseagreen3") ))+
+  theme(legend.key = element_rect(colour =c("darkcyan","darkcyan") ))+
   theme(legend.background = element_blank(),legend.box.background = element_rect(colour = "black"))+
   guides(color="none", fill = guide_legend(title="Floral status:",override.aes = list(shape = NA)))+
   theme(axis.text.y=element_text(size=30))+
@@ -372,9 +366,9 @@ dev.off()
 gdat.isl.ntz <- gdat.ref %>%
   dplyr::select(c("entity_ID","entity_class","nfix","nfixno", "latitude","abs.lat","longitude", # Select columns
                   "landtype","status","presence","area","dist","elev_range","precipitation", "temperature","urbanland"))%>%
-  filter(status=="naturalized")%>%
-  mutate(area = as.vector(log10((area)+.01)))%>%  #log10 transformation of area for models only; remove for figures
+  filter(status=="naturalized")%>%  
   filter(landtype=="oceanic")%>%
+  mutate(area = as.vector(log10((area)+.01)))%>%  #log10 transformation of area
   drop_na()%>%
   mutate_at(c("abs.lat","area","dist","elev_range","precipitation", "temperature","urbanland"), scale)#%>%  #scale all explanatory variables
 
@@ -434,6 +428,9 @@ var.plot<- ggeffect(model.oc.pres.rac, terms=c("abs.lat"), type="re")
 effect.plot<- plot(var.plot, colors="coral")
 effect.plot
 
+#test area distance effect
+var.plot<- ggeffect(model.oc.prop.rac, terms=c("dist","area"), type="re")
+plot(var.plot)
 
 #Figure area:distance interaction for presence of naturalized N-fixing species on oceanic islands
 #create a color scale
@@ -548,10 +545,6 @@ E2 <- resid(model.oc.prop.rac, type = "pearson")
 #list of variables: abs.lat, area, dist
 plot(E2 ~ dist, data = oceanic.prop)
 
-#test area distance effect
-var.plot<- ggeffect(model.oc.prop.rac, terms=c("dist","area"), type="re")
-plot(var.plot)
-
 
 ####Data only including NATIVE species on OCEANIC ISLANDS (M5,M6)####
 
@@ -560,8 +553,8 @@ gdat.isl.ntv <- gdat.ref %>%
   dplyr::select(c("entity_ID","entity_class","nfix","nfixno", "latitude","abs.lat","longitude", # Select columns
                   "landtype","status","presence","area","dist","elev_range","precipitation", "temperature"))%>%
   filter(status=="native")%>%
-  mutate(area = as.vector(log10((area)+.01)))%>%  #log10 transformation of area for models only; remove for figs 
   filter(landtype=="oceanic")%>%
+  mutate(area = as.vector(log10((area)+.01)))%>%  #log10 transformation of area for models only
   drop_na()%>%
   mutate_at(c("abs.lat","area","dist","elev_range","precipitation", "temperature"), scale)  #scale all explanatory variables
 
@@ -627,30 +620,21 @@ plot(E2 ~ precipitation, data = oceanic.pres.ntv)
 # pinpoint the outlier: entity_ID = 594
 outlier <- oceanic.pres.ntv %>% filter(abs.lat < -1) %>% filter(dist < 1.1 & dist > 0.9) %>% filter(area < 1.1 & area > 0.9)
 
-var.plot<- ggeffect(model.oc.pres.rac, terms=c("area"), type="re")
-plot(var.plot)
-
 var.plot<- ggeffect(model.oc.pres.rac, terms=c("precipitation"), type="re")
-precip.ntv.plot<- plot(var.plot, colors="darkseagreen3")
+precip.ntv.plot<- plot(var.plot, colors="darkcyan")
 precip.ntv.plot
-
-#Saving the plot as a png
-png("figures/M5_precip_oc_pres_ntv.jpg", width=10, height= 10, units='in', res=300)
-precip.ntv.plot
-dev.off()
 
 #distance plot
 new.dat.oc <- with(oceanic.pres.ntv, expand.grid(dist = seq(min(dist), max(dist), length = 1000))) %>%
-  mutate(rac = mean(rac), abs.lat= mean(oceanic.pres.ntv$abs.lat), area=mean(oceanic.pres.ntv$area), elev_range=mean(oceanic.pres.ntv$elev_range), precipitation=mean(oceanic.pres.ntv$precipitation)) #CREATE range for area from min to max value
+  mutate(rac = mean(rac), abs.lat= mean(oceanic.pres.ntv$abs.lat), area=mean(oceanic.pres.ntv$area), temperature= mean(oceanic.pres.ntv$temperature), precipitation=mean(oceanic.pres.ntv$precipitation)) #CREATE range for area from min to max value
 
 pred.ml <- predict(model.oc.pres.rac, newdata = new.dat.oc, type = "response", se = TRUE) %>% # create new dataframe where area changes and all other variables are kept on mean
   as.data.frame() %>%
   mutate(dist = new.dat.oc$dist, landtype = "oceanic")
 
 oc_pres_native_dist_plot<-ggplot(pred.ml, aes(x = dist, y = fit))+
-  geom_line(color="darkseagreen3") +
-  geom_ribbon(aes(ymin=fit-se.fit, ymax=fit+se.fit), alpha=0.7,color="darkseagreen3", fill="darkseagreen3")+ 
-  #geom_point(data=oceanic.pres, mapping=aes(x=dist, y=presence),alpha=0.2, size=2,color="coral", fill="coral")+ 
+  geom_line(color="darkcyan") +
+  geom_ribbon(aes(ymin=fit-se.fit, ymax=fit+se.fit), alpha=0.7,color="darkcyan", fill="darkcyan")+ 
   theme_minimal()+
   labs(y="Probability of N-fixing plants")+
   xlab("Distance [km]")+  
@@ -675,7 +659,7 @@ oceanic.prop.ntv <- gdat.isl.ntv%>%
   filter(!entity_ID == 921) %>%
   filter(!entity_ID == 11474)%>%
   mutate(species = nfix + nfixno)%>% #find out values that have no species counts
-  filter(species > 0)%>%
+  filter(species > 0)%>% #filter out values that have no species counts
   filter(precipitation<4)
 
 #check correlations
@@ -703,20 +687,18 @@ correlogram(model.oc.prop, oceanic.prop.ntv, "figures/M6_ntvocprop_correlogram.j
 
 #model including spatial correlation variable (rac)
 rac <- Spat.cor.rep(model.oc.prop,oceanic.prop.ntv,2000)
-model.oc.prop.rac <- glm(cbind(nfix,nfixno)~abs.lat +area +dist+precipitation+temperature + area:dist+rac, data = oceanic.prop.ntv, family = binomial(link ="logit")) #has to be exactly the same as the model but with +rac
+model.oc.prop.rac <- glm(cbind(nfix,nfixno)~abs.lat+area +dist+precipitation+temperature + area:dist+rac, data = oceanic.prop.ntv, family = binomial(link ="logit")) #has to be exactly the same as the model but with +rac
 summary(model.oc.prop.rac)
 
 
-# convert the model output into a df for estimates plot
+#tidy and convert the model output into a df for estimates plot
 coef_dataM6 <- tidy(model.oc.prop.rac, conf.int = TRUE)
-
 
 #check variance inflation factor (should be below 5 for all variables)
 vif(model.oc.prop.rac)
 
 #check model assumptions
-
-simulationOutput <- simulateResiduals(fittedModel = model.oc.prop.rac.full, plot = F)
+simulationOutput <- simulateResiduals(fittedModel = model.oc.prop.rac, plot = F)
 #access residuals:
 residuals(simulationOutput)
 #qqplot
@@ -725,10 +707,9 @@ plotQQunif(simulationOutput)
 plotResiduals(simulationOutput)
 #overdispersion
 testDispersion(simulationOutput)
-#check dispersion
-disp_check(model.oc.prop.rac,oceanic.prop.ntv)
 #zero inflation
 testZeroInflation(simulationOutput)
+
 
 #check residuals for each variable separately
 E2 <- resid(model.oc.prop.rac, type = "pearson")
@@ -736,30 +717,8 @@ E2 <- resid(model.oc.prop.rac, type = "pearson")
 plot(E2 ~ abs.lat, data = oceanic.prop.ntv)
 #outlier in precipitation
 
-#var.plot<- ggeffect(model.oc.prop.rac, terms=c("temperature"), type="re")
-#temp.ntv.plot<- plot(var.plot, colors="darkseagreen3")
-
-#Saving the plot as a png
-#png("figures/temp_oc_prop_ntv_green.jpg", width=10, height= 10, units='in', res=300)
-#temp.ntv.plot
-#dev.off()
-
-
 var.plot<- ggeffect(model.oc.prop.rac, terms=c("precipitation"), type="re")
-precip.ntv.plot<- plot(var.plot, colors="darkseagreen3")
-
-#Saving the plot as a png
-png("figures/M6_precip_oc_prop_ntv.jpg", width=10, height= 10, units='in', res=300)
-precip.ntv.plot
-dev.off()
-
-#model validation
-mod <- model.oc.prop.rac
-dat <- oceanic.prop.ntv
-resid_fit_plot(mod,dat) 
-indep_cat_plot(mod,dat,dat$area)
-indep_cat_plot(mod,dat,dat$dist)
-indep_cat_plot(mod,dat,dat$precipitation)
+plot(var.plot, colors="darkcyan")
 
 # get outlier in residuals:
 F2 <- fitted(mod)
@@ -768,21 +727,13 @@ dat$F2<- F2 > 0.13 # 675,921,11474
 var.plot<- ggeffect(model.oc.prop.rac, terms=c("dist","area"), type="re")
 areadist.ntv.plot<-plot(var.plot)
 
-#Saving the plot as a png
-png("figures/M6_areadist_oc_prop_ntv.jpg", width=10, height= 10, units='in', res=300)
-areadist.ntv.plot
-dev.off()
-
-
 #Figure native area:distance interaction
+colScale <- scale_colour_manual(values =c ("darkslategray1","darkslategray3","darkslategray4","darkcyan"))
+fillScale <- scale_fill_manual(values =c ("darkslategray1","darkslategray3","darkslategray4","darkcyan"))
 
-colScale <- scale_colour_manual(values =c ("darkseagreen1","darkseagreen3","darkseagreen4","darkseagreen"))
-fillScale <- scale_fill_manual(values =c ("darkseagreen1","darkseagreen3","darkseagreen4","darkseagreen"))
+sd(oceanic.prop.ntv$area)#get standard deviation to create island size groups
 
-model.oc.prop.rac$area
-sd(oceanic.prop.ntv$area)
-
-area.minmax <- data.frame(area = c(mean(oceanic.prop.ntv$area)-sd(oceanic.prop.ntv$area),mean(oceanic.prop.ntv$area),mean(oceanic.prop.ntv$area)+sd(oceanic.prop.ntv$area)), size =c ("small", "medium","large")) 
+area.minmax <- data.frame(area = c(mean(oceanic.prop.ntv$area)-sd(oceanic.prop.ntv$area),mean(oceanic.prop.ntv$area),mean(oceanic.prop.ntv$area)+sd(oceanic.prop.ntv$area)), size =c ("small", "medium","large")) #create size groups 
 
 dist.range <- with(oceanic.prop.ntv, expand.grid(dist = seq(min(dist), max(dist), length = 1000))) 
 
@@ -797,7 +748,6 @@ pdat <- cbind(ex.grid,pred) %>%
 areadist_oc_pres_ntv_plot<- ggplot(pdat, aes(x = dist, y = fit, fill=size, color=size))+
   geom_line() +
   geom_ribbon(aes(ymin=fit-se.fit, ymax=fit+se.fit), alpha=0.7)+ 
-  #geom_point(data=oceanic.prop.ntv, mapping=aes(x=dist, y=presence),alpha=0.2, size=2)+ 
   theme_minimal()+
   labs(y="Proportion of N-fixing plant species")+
   xlab("Distance [km]")+
@@ -805,12 +755,9 @@ areadist_oc_pres_ntv_plot<- ggplot(pdat, aes(x = dist, y = fit, fill=size, color
   theme(axis.text.x=element_text(size=30))+
   theme(axis.title.y=element_text(size=30))+
   theme(axis.title.x=element_text(size=30))+
-  #coord_cartesian(ylim=c(0,1))+
   colScale+
   fillScale+
   ylim(0,0.1)+
-  #theme(legend.title = element_text(size=30))+ #change legend title font size
-  #theme(legend.text = element_text(size=30))+
   theme(legend.key.size = unit(1, 'cm'), #change legend key size
         legend.key.height = unit(1, 'cm'), #change legend key height
         legend.key.width = unit(1, 'cm'), #change legend key width
@@ -821,7 +768,7 @@ areadist_oc_pres_ntv_plot<- ggplot(pdat, aes(x = dist, y = fit, fill=size, color
 areadist_oc_pres_ntv_plot
 
 #Saving the plot as a png
-png("figures/M6_areadist_interaction.jpg", width=10, height= 10, units='in', res=300)
+png("figures/M6_areadist_interactioncyan.jpg", width=10, height= 10, units='in', res=300)
 areadist_oc_pres_ntv_plot
 dev.off()
 
@@ -846,7 +793,7 @@ oc_pres_est_plot<-
   geom_point(size=3) +
   geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2, size=1.2) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "darkgrey") +
-  scale_color_manual(values = c("Model 3" = "coral", "Model 5" = "darkseagreen3")) +  
+  scale_color_manual(values = c("Model 3" = "coral", "Model 5" = "darkcyan")) +  
   labs(title = "Coefficient Estimates for Presence on oceanic islands (M3 & M5)") +
   theme_minimal() +
   coord_flip()+
@@ -878,7 +825,7 @@ oc_prop_est_plot<-
   geom_point(size=3) +
   geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2, size=1.2) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "darkgrey") +
-  scale_color_manual(values = c("Model 4" = "coral", "Model 6" = "darkseagreen3")) +  
+  scale_color_manual(values = c("Model 4" = "coral", "Model 6" = "darkcyan")) +  
   labs(title = "Coefficient Estimates for Proportion on oceanic islands (M4 & M6)") +
   theme_minimal() +
   coord_flip()+
@@ -893,7 +840,7 @@ dev.off()
 
 
 ####Package versions and citations####
-# Get package versions to report in MS:
+# Get package versions and citations
 packageVersion(c("dplyr")) #1.1.4
 packageVersion(c("segmented")) #2.0.2
 packageVersion(c("nlme")) #3.1.163
@@ -915,14 +862,14 @@ packageVersion(c("MuMIn")) #1.47.5
 packageVersion(c("tidyverse")) # 2.0.0
 packageVersion(c("car")) #3.1.2
 packageVersion(c("V8")) #4.4.1
-packageVersion(c("rsq")) # 2.6
+packageVersion(c("broom")) # 1.0.5
 packageVersion(c("Matrix")) #1.6.5
 
 
 get_pkgs_info(pkgs = c("dplyr", "segmented","nlme","mgcv","gridExtra","betareg",
                        "MASS","lme4","lmerTest","lsmeans","ggeffects","spdep",
                        "ggplot2","effects","ncf","ape","sjPlot",
-                       "MuMIn","tidyverse","car", "V8", "rsq", "DHARMa"), out.dir = getwd())
+                       "MuMIn","tidyverse","car", "V8", "broom", "DHARMa"), out.dir = getwd())
 
 citation(c("dplyr"))
 citation(c("segmented")) #2.0.2
@@ -944,6 +891,6 @@ citation(c("MuMIn")) #1.47.5
 citation(c("tidyverse")) # 2.0.0
 citation(c("car")) #3.1.2
 citation(c("V8")) #4.4.1
-citation(c("rsq")) # 2.6
+citation(c("broom")) # 1.0.5
 citation(c("Matrix"))
 
