@@ -120,7 +120,7 @@ broad.pres.ntz<-
   geom_point(position=position_dodge(1), size = 2) + 
   geom_errorbar(aes(ymin=lsmean-SE, ymax=lsmean+SE), width=0.4,size=1, position=position_dodge(1)) + 
   theme(legend.justification=c(1,1), legend.position=c(1,1))+
-  geom_bar(stat="identity",position=position_dodge(1), alpha=0.5)+
+  geom_bar(stat="identity",position=position_dodge(1), alpha=0.3)+
   geom_point(data = gdat.ml.ntz,aes(x=landtype,y=presence,color=status),position=position_jitterdodge(dodge.width = 1),size=2,alpha=0.3)+
   coord_cartesian(ylim=c(0,1))+
   colScale+
@@ -158,7 +158,7 @@ broad.pres.ntv<-
   geom_point(position=position_dodge(1), size = 2) + 
   geom_errorbar(aes(ymin=lsmean-SE, ymax=lsmean+SE), width=0.4,size=1, position=position_dodge(1)) + 
   theme(legend.justification=c(1,1), legend.position=c(1,1))+
-  geom_bar(stat="identity",position=position_dodge(1), alpha=0.4)+
+  geom_bar(stat="identity",position=position_dodge(1), alpha=0.3)+
   geom_point(data = gdat.ml.ntv,aes(x=landtype,y=presence,color=status),position=position_jitterdodge(dodge.width = 1),size=2,alpha=0.3)+
   coord_cartesian(ylim=c(0,1))+
   colScale+
@@ -296,7 +296,7 @@ broadpropntz<-
   geom_point(position=position_dodge(1), size = 2) + 
   geom_errorbar(aes(ymin=lsmean-SE, ymax=lsmean+SE), width=0.4,size=1, position=position_dodge(1)) + 
   theme(legend.justification=c(1,1), legend.position=c(1,1))+
-  geom_bar(stat="identity",position=position_dodge(1), alpha=0.4)+
+  geom_bar(stat="identity",position=position_dodge(1), alpha=0.3)+
   geom_point(data = gdat.prop.ntz,aes(x=landtype,y=propnfix,color=landtype),position=position_jitterdodge(dodge.width = 1),size=2,alpha=0.3)+
   coord_cartesian(ylim=c(0,0.02))+
   colScale+
@@ -431,8 +431,8 @@ plot(var.plot)
 
 #Figure area:distance interaction for presence of naturalized N-fixing species on oceanic islands
 #create a color scale
-colScale<-scale_color_manual(values = c("small" = "darkred", "medium" = "brown2", "large" = "coral"))
-fillScale<-scale_fill_manual(values = c("small" = "darkred", "medium" = "brown2", "large" = "coral"))
+colScale <- scale_colour_manual(values =c ("coral","coral2","coral3","sandybrown"))
+fillScale <- scale_fill_manual(values =c ("coral","coral2","coral3","coral"))
 
 sd(gdat.isl.ntz$area) #get standard deviation to create size groups (small, medium, large)
 
@@ -448,39 +448,26 @@ pred <- predict.glm(model.oc.pres.rac,type="response",newdata = pred.dat,se=TRUE
 pdat <- cbind(ex.grid,pred) %>%
   left_join(area.minmax)
 
-
-breakpoints<- c(-Inf,mean(gdat.isl.ntz$area)-sd(gdat.isl.ntz$area),mean(gdat.isl.ntz$area)+sd(gdat.isl.ntz$area),Inf)
-# Add size column with custom breakpoints
-gdat.isl.ntz$areasize <- cut(gdat.isl.ntz$area, 
-                         breaks = breakpoints, 
-                         labels = c("small", "medium", "large"))
-gdat.isl.ntz$areasize <- factor(gdat.isl.ntz$areasize, levels = c("large", "medium", "small"))
-
-#plot the area distance interaction position=position_jitterdodge(dodge.width = 1)
+#plot the area distance interaction
 areadist_oc_pres_ntz_plot<- ggplot(pdat, aes(x = dist, y = fit, fill=size, color=size))+
   geom_line() +
-  geom_ribbon(aes(ymin=fit-se.fit, ymax=fit+se.fit), alpha=0.4)+ 
-  #geom_point(data = gdat.isl.ntz,aes(x=dist,y=presence, color=areasize, fill=areasize),alpha=0.4,show.legend = FALSE)+
+  geom_ribbon(aes(ymin=fit-se.fit, ymax=fit+se.fit), alpha=0.7)+ 
   theme_minimal()+
   labs(y="Probability of N-fixing plant species")+
   xlab("Distance [km]")+
   theme(axis.text.y=element_text(size=30))+
   theme(axis.text.x=element_text(size=30))+
   theme(axis.title.y=element_text(size=30))+
-  theme(axis.title.x=element_text(size=30,margin = margin(t = 10)))+
+  theme(axis.title.x=element_text(size=30))+
   colScale+
   fillScale+
   ylim(0,1)+
-  guides(
-    color = guide_legend(title = ""),  # Combine color legend
-    fill = guide_legend(title = "")  # Ensure fill uses the same legend title
-  ) +
   theme(legend.key.size = unit(1, 'cm'),      #change legend key size
         legend.key.height = unit(1, 'cm'),    #change legend key height
         legend.key.width = unit(1, 'cm'),     #change legend key width
         legend.title = element_text(size=34), #change legend title font size
         legend.text = element_text(size=30),  #change legend text font size
-        legend.position =  c(0.2, 0.85))       #change legend position
+        legend.position = c(0.2, 0.85))       #change legend position
 
 areadist_oc_pres_ntz_plot
 
@@ -633,29 +620,27 @@ precip.ntv.plot
 
 #distance plot
 new.dat.oc <- with(oceanic.pres.ntv, expand.grid(dist = seq(min(dist), max(dist), length = 1000))) %>%
-  mutate(rac = mean(rac), abs.lat= mean(oceanic.pres.ntv$abs.lat), area=mean(oceanic.pres.ntv$area), temperature= mean(oceanic.pres.ntv$temperature), precipitation=mean(oceanic.pres.ntv$precipitation)) 
+  mutate(rac = mean(rac), abs.lat= mean(oceanic.pres.ntv$abs.lat), area=mean(oceanic.pres.ntv$area), temperature= mean(oceanic.pres.ntv$temperature), precipitation=mean(oceanic.pres.ntv$precipitation)) #CREATE range for area from min to max value
 
-pred.ml <- predict(model.oc.pres.rac, newdata = new.dat.oc, type = "response", se = TRUE) %>%
+pred.ml <- predict(model.oc.pres.rac, newdata = new.dat.oc, type = "response", se = TRUE) %>% # create new dataframe where area changes and all other variables are kept on mean
   as.data.frame() %>%
   mutate(dist = new.dat.oc$dist, landtype = "oceanic")
 
-
 oc_pres_native_dist_plot<-ggplot(pred.ml, aes(x = dist, y = fit))+
   geom_line(color="darkcyan") +
-  geom_ribbon(aes(ymin=fit-se.fit, ymax=fit+se.fit), alpha=0.3,color="darkcyan", fill="darkcyan")+ 
-  geom_point(data = gdat.isl.ntv,aes(x=dist,y=presence), color="darkcyan", fill="darkcyan",alpha=0.4)+
+  geom_ribbon(aes(ymin=fit-se.fit, ymax=fit+se.fit), alpha=0.7,color="darkcyan", fill="darkcyan")+ 
   theme_minimal()+
   labs(y="Probability of N-fixing plants")+
   xlab("Distance [km]")+  
   theme(axis.text.y=element_text(size=30))+
   theme(axis.text.x=element_text(size=30))+
   theme(axis.title.y=element_text(size=30))+
-  theme(axis.title.x=element_text(size=30,margin = margin(t = 10)))
+  theme(axis.title.x=element_text(size=30))
 
 oc_pres_native_dist_plot
 
 #Saving the plot as a png
-png("figures/M5_dist_oc_pres_ntvpoints.jpg", width=10, height= 10, units='in', res=300)
+png("figures/M5_dist_oc_pres_ntv.jpg", width=10, height= 10, units='in', res=300)
 oc_pres_native_dist_plot
 dev.off()
 
@@ -736,67 +721,49 @@ dat$F2<- F2 > 0.13 # 675,921,11474
 var.plot<- ggeffect(model.oc.prop.rac, terms=c("dist","area"), type="re")
 areadist.ntv.plot<-plot(var.plot)
 
-#area plot
-new.dat.oc <- with(oceanic.prop.ntv, expand.grid(area = seq(min(area), max(area), length = 1000))) %>%
-  mutate(rac = mean(rac), abs.lat= mean(oceanic.prop.ntv$abs.lat), dist=mean(oceanic.prop.ntv$dist), temperature= mean(oceanic.prop.ntv$temperature), precipitation=mean(oceanic.prop.ntv$precipitation)) 
+#Figure native area:distance interaction
+colScale <- scale_colour_manual(values =c ("darkslategray1","darkslategray3","darkslategray4","darkcyan"))
+fillScale <- scale_fill_manual(values =c ("darkslategray1","darkslategray3","darkslategray4","darkcyan"))
 
-pred.ml <- predict(model.oc.prop.rac, newdata = new.dat.oc, type = "response", se = TRUE) %>%
-  as.data.frame() %>%
-  mutate(area = new.dat.oc$area, landtype = "oceanic")
+sd(oceanic.prop.ntv$area)#get standard deviation to create island size groups
 
+area.minmax <- data.frame(area = c(mean(oceanic.prop.ntv$area)-sd(oceanic.prop.ntv$area),mean(oceanic.prop.ntv$area),mean(oceanic.prop.ntv$area)+sd(oceanic.prop.ntv$area)), size =c ("small", "medium","large")) #create size groups 
 
-oc_prop_native_area_plot<-ggplot(pred.ml, aes(x = area, y = fit))+
-  geom_line(color="darkcyan") +
-  geom_ribbon(aes(ymin=fit-se.fit, ymax=fit+se.fit), alpha=0.3,color="darkcyan", fill="darkcyan")+ 
-  #geom_point(data = gdat.isl.ntv,aes(x=dist,y=prop), color="darkcyan", fill="darkcyan",alpha=0.4)+
+dist.range <- with(oceanic.prop.ntv, expand.grid(dist = seq(min(dist), max(dist), length = 1000))) 
+
+ex.grid <- expand.grid(area = area.minmax$area, dist = dist.range$dist)
+
+pred.dat <- ex.grid %>% mutate(rac = mean(rac), abs.lat= mean(oceanic.prop.ntv$abs.lat), precipitation=mean(oceanic.prop.ntv$precipitation), temperature=mean(oceanic.prop.ntv$temperature))
+pred <- predict.glm(model.oc.prop.rac,type="response",newdata = pred.dat,se=TRUE)
+
+pdat <- cbind(ex.grid,pred) %>%
+  left_join(area.minmax)
+
+areadist_oc_pres_ntv_plot<- ggplot(pdat, aes(x = dist, y = fit, fill=size, color=size))+
+  geom_line() +
+  geom_ribbon(aes(ymin=fit-se.fit, ymax=fit+se.fit), alpha=0.7)+ 
   theme_minimal()+
-  labs(y="Proportion of N-fixing plants")+
-  xlab("area")+  
+  labs(y="Proportion of N-fixing plant species")+
+  xlab("Distance [km]")+
   theme(axis.text.y=element_text(size=30))+
   theme(axis.text.x=element_text(size=30))+
   theme(axis.title.y=element_text(size=30))+
-  theme(axis.title.x=element_text(size=30,margin = margin(t = 10)))
+  theme(axis.title.x=element_text(size=30))+
+  colScale+
+  fillScale+
+  ylim(0,0.1)+
+  theme(legend.key.size = unit(1, 'cm'),      #change legend key size
+        legend.key.height = unit(1, 'cm'),    #change legend key height
+        legend.key.width = unit(1, 'cm'),     #change legend key width
+        legend.title = element_text(size=34), #change legend title font size
+        legend.text = element_text(size=30),  #change legend text font size
+        legend.position = c(0.2, 0.85))       #change legend position
 
-oc_prop_native_area_plot
-#Saving the plot as a png
-png("figures/M6_area_prop_ntv.jpg", width=10, height= 10, units='in', res=300)
-oc_prop_native_area_plot
-dev.off()
-
-
-
-#Saving the plot as a png
-png("figures/M6_dist_prop_ntv.jpg", width=10, height= 10, units='in', res=300)
-oc_prop_native_dist_plot
-dev.off()
-
-#distance plot
-new.dat.oc <- with(oceanic.prop.ntv, expand.grid(dist = seq(min(dist), max(dist), length = 1000))) %>%
-  mutate(rac = mean(rac), abs.lat= mean(oceanic.prop.ntv$abs.lat), area=mean(oceanic.prop.ntv$area), temperature= mean(oceanic.prop.ntv$temperature), precipitation=mean(oceanic.prop.ntv$precipitation)) 
-
-pred.ml <- predict(model.oc.prop.rac, newdata = new.dat.oc, type = "response", se = TRUE) %>%
-  as.data.frame() %>%
-  mutate(dist = new.dat.oc$dist, landtype = "oceanic")
-
-
-oc_prop_native_dist_plot<-ggplot(pred.ml, aes(x = dist, y = fit))+
-  geom_line(color="darkcyan") +
-  geom_ribbon(aes(ymin=fit-se.fit, ymax=fit+se.fit), alpha=0.3,color="darkcyan", fill="darkcyan")+ 
-  #geom_point(data = gdat.isl.ntv,aes(x=dist,y=prop), color="darkcyan", fill="darkcyan",alpha=0.4)+
-  theme_minimal()+
-  labs(y="Proportion of N-fixing plants")+
-  xlab("Distance [km]")+  
-  theme(axis.text.y=element_text(size=30))+
-  theme(axis.text.x=element_text(size=30))+
-  theme(axis.title.y=element_text(size=30))+
-  theme(axis.title.x=element_text(size=30,margin = margin(t = 10)))
-
-oc_prop_native_dist_plot
-
+areadist_oc_pres_ntv_plot
 
 #Saving the plot as a png
-png("figures/M6_dist_prop_ntv.jpg", width=10, height= 10, units='in', res=300)
-oc_prop_native_dist_plot
+png("figures/M6_areadist_interactioncyan.jpg", width=10, height= 10, units='in', res=300)
+areadist_oc_pres_ntv_plot
 dev.off()
 
 
@@ -808,28 +775,22 @@ dev.off()
 coef_dataM3$model <- "Model 3"
 coef_dataM5$model <- "Model 5"
 
-
 #combine estimates of both models into one df
 combined_data <- rbind(coef_dataM3, coef_dataM5)
 combined_data$term <- factor(combined_data$term, levels = c("rac","temperature", "precipitation","abs.lat","area:dist","dist","area", "(Intercept)")) #Specify the order of variables
-combined_data<- combined_data%>% filter(!term=="(Intercept)") 
+combined_data<- combined_data%>% filter(!term=="(Intercept)")                                                                                         #filter out intercept because variables are scaled 
 
 #Create the combined plot
-oc_pres_est_plot <- ggplot(combined_data, aes(x = term, y = estimate, color = model)) +
-  geom_point(position = position_dodge(width = 0.5), size = 3) +  # Dodge points horizontally
-  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), 
-                position = position_dodge(width = 0.5), 
-                width = 0.2, size = 1.2) +  # Dodge error bars
+oc_pres_est_plot<-
+  ggplot(combined_data, aes(x = term, y = estimate, color = model)) +
+  geom_point(size=3) +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2, size=1.2) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "darkgrey") +
-  scale_color_manual(values = c("Model 3" = "coral", "Model 5" = "darkcyan")) +
-  labs(title = "Coefficient Estimates for Variables in Models 3 and 5") +
+  scale_color_manual(values = c("Model 3" = "coral", "Model 5" = "darkcyan")) +  
+  labs(title = "Coefficient Estimates for Presence on oceanic islands (M3 & M5)") +
   theme_minimal() +
-  coord_flip() +  # Flip coordinates for horizontal terms
-  theme(
-    axis.text.x = element_text(size = 14),
-    axis.text.y = element_text(size = 12),
-    legend.position = "top"  # Adjust legend position if needed
-  )
+  coord_flip()+
+  theme(axis.text.x = element_text(size = 14))
 
 oc_pres_est_plot
 
@@ -850,22 +811,17 @@ combined_data <- rbind(coef_dataM4, coef_dataM6)
 combined_data$term <- factor(combined_data$term, levels = c("rac","temperature", "precipitation","abs.lat","area:dist","dist","area", "(Intercept)")) #Specify the order of variables
 combined_data<- combined_data%>% filter(!term=="(Intercept)")                                                                                         #filter out intercept because variables are scaled
   
-#Create the combined plot
-oc_prop_est_plot <- ggplot(combined_data, aes(x = term, y = estimate, color = model)) +
-  geom_point(position = position_dodge(width = 0.5), size = 3) +  # Dodge points horizontally
-  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), 
-                position = position_dodge(width = 0.5), 
-                width = 0.2, size = 1.2) +  # Dodge error bars
+# Create the combined plot
+oc_prop_est_plot<-
+  ggplot(combined_data, aes(x = term, y = estimate, color = model)) +
+  geom_point(size=3) +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2, size=1.2) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "darkgrey") +
-  scale_color_manual(values = c("Model 4" = "coral", "Model 6" = "darkcyan")) +
-  labs(title = "Coefficient Estimates for Variables in Models 4 and 6") +
+  scale_color_manual(values = c("Model 4" = "coral", "Model 6" = "darkcyan")) +  
+  labs(title = "Coefficient Estimates for Proportion on oceanic islands (M4 & M6)") +
   theme_minimal() +
-  coord_flip() +  # Flip coordinates for horizontal terms
-  theme(
-    axis.text.x = element_text(size = 14),
-    axis.text.y = element_text(size = 12),
-    legend.position = "top"  # Adjust legend position if needed
-  )
+  coord_flip()+
+  theme(axis.text.x = element_text(size = 14))
 
 oc_prop_est_plot
 
