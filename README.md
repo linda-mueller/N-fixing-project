@@ -6,3 +6,6 @@ Usage:
 Download the publicly available GIFT and GLoNAF datasets, join GIFT dataset with the file GIFT_EXT_geo_Aug_2023_entitygeoentityclass2 (found in data folder) to get information on geology, needed for distinction between non-oceanic and oceanic islands.
 Create an R-Project folder and copy all scripts and datasets in there. First run the data cleaning script, to recreate all datasets, which are later used in the data analysis. 
 Next, run the data analysis script to get all model results and create figures. It is also possible to directly run the data analysis script with the provided datasets.
+
+
+[![DOI](https://zenodo.org/badge/865349447.svg)](https://doi.org/10.5281/zenodo.14236360)
