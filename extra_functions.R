@@ -1,10 +1,10 @@
-#additional functions for N-fixing project
+#additional functions for analysis of N-fixing project
 
 ###########################
 ##### Data exploration ####
 ###########################
 
-#!!! for data exploration, must cite:
+#for data exploration, must cite:
 #Mixed effects models and extensions in ecology with R. (2009).
 #Zuur, AF, Ieno, EN, Walker, N, Saveliev, AA, and Smith, GM. Springer.
 
@@ -104,79 +104,4 @@ Spat.cor.rep <- function(mod,dat,dist) {
 }
 #Spat.cor.rep(mod,dat,2000)
 
-
-###########################
-#### Model validation #####
-###########################
-
-#GLM
-#homogeneity: residuals v fitted (except for binomial)
-#independence: residuals v covariates in/out of model
-#influential observations: cooks distance
-#overdispersion: >1 = overdispersed (except gamma, NB, GP, CMP; these built in correct for dispersion)
-
-#independence function continuous
-indep_cont_plot <- function(mod,dat,var) {
-  E2 <- resid(mod, type = "pearson")
-  plot(x = var, 
-       y = E2, 
-       xlab = "var",
-       ylab = "Pearson residuals", 
-       pch = 16)
-  abline(h = 0) 
-}
-#indep_cont_plot(mod,dat,df$var)
-
-#independence function categorical
-indep_cat_plot <- function(mod,dat,var) {
-  E2 <- resid(mod, type = "pearson")
-  boxplot(E2 ~ var, 
-          data = dat, 
-          cex.lab = 1.5,
-          xlab = "var",
-          ylab = "Pearson residuals")
-  abline(h = 0) 
-}
-#indep_cat_plot(mod,dat,df$var)
-
-#cooks distance function
-cooks_dist_plot <- function(mod) {
-  plot(cooks.distance(mod), 
-       type = "h",
-       ylim = c(0,1),
-       xlab = "Observations",
-       ylab = "Cook distance values")
-  abline(h = 0, lwd = 2, lty = 2) 
-}
-#cooks_dist_plot(mod)
-
-#normality function
-resid_hist<- function(mod) {
-  E2 <- resid(mod, type = "pearson")
-  hist(E2, main = "", 
-       xlab = "Residuals")
-}
-#resid_hist(mod)
-
-#qqplots
-resid_qqplot <- function(mod) {
-  E2 <- rstandard(mod)
-  qqnorm(E2, main = "")
-  qqline(E2)
-}
-#resid_qqplot(mod)
-
-###########################
-#### DHARMa validation ####
-###########################
-
-#testDispersion(mod) #test for over/under dispersion
-#testZeroInflation(mod) #test zero inflation
-
-#simulationOutput <- simulateResiduals(mod, plot = F) # calculate residuals (randomized quantile residuals)
-#par(mfrow = c(2, 2)) # set panel arrangement
-#plotResiduals(simulationOutput) #homogeneity (residuals v fitted)
-#plotResiduals(simulationOutput, form = dat$var1) #independence continuous
-#plotResiduals(simulationOutput, form = dat$var2) #independence categorical
-#plotQQunif(simulationOutput) #qqplot
 

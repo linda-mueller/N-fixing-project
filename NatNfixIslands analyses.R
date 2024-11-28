@@ -1,7 +1,6 @@
 #N-fixing project: Script version November 2024
 
 ####Libraries and initial dataset####
-
 # Load the necessary libraries
 library(dplyr);library(segmented);library(nlme);library(mgcv);library(gridExtra);library(betareg);
 library(MASS);library(lme4);library(lmerTest);library(lsmeans);library(ggeffects);library(spdep);
@@ -297,7 +296,7 @@ broadpropntz<-
   geom_errorbar(aes(ymin=lsmean-SE, ymax=lsmean+SE), width=0.4,size=1, position=position_dodge(1)) + 
   theme(legend.justification=c(1,1), legend.position=c(1,1))+
   geom_bar(stat="identity",position=position_dodge(1), alpha=0.4)+
-  geom_point(data = gdat.prop.ntz,aes(x=landtype,y=propnfix,color=landtype),position=position_jitterdodge(dodge.width = 1),size=2,alpha=0.3)+
+  geom_point(data = gdat.prop.ntz,aes(x=landtype,y=propnfix,color=landtype),position=position_jitterdodge(dodge.width = 1),size=2,alpha=0.4)+
   coord_cartesian(ylim=c(0,0.02))+
   colScale+
   fillScale+
@@ -333,7 +332,7 @@ broadpropntv<-
   geom_errorbar(aes(ymin=lsmean-SE, ymax=lsmean+SE), width=0.4,size=1, position=position_dodge(1)) + 
   theme(legend.justification=c(1,1), legend.position=c(1,1))+
   geom_bar(stat="identity",position=position_dodge(1), alpha=0.4)+
-  geom_point(data = gdat.prop.ntv,aes(x=landtype,y=propnfix,color=status),position=position_jitterdodge(dodge.width = 1),size=2,alpha=0.3)+
+  geom_point(data = gdat.prop.ntv,aes(x=landtype,y=propnfix,color=status),position=position_jitterdodge(dodge.width = 1),size=2,alpha=0.4)+
   coord_cartesian(ylim=c(0,0.16))+
   colScale+
   fillScale+
@@ -447,8 +446,6 @@ pred <- predict.glm(model.oc.pres.rac,type="response",newdata = pred.dat,se=TRUE
 
 pdat <- cbind(ex.grid,pred) %>%
   left_join(area.minmax)
-
-
 
 #plot the area distance interaction position=position_jitterdodge(dodge.width = 1)
 areadist_oc_pres_ntz_plot<- ggplot(pdat, aes(x = dist, y = fit, fill=size, color=size))+
@@ -648,7 +645,7 @@ oc_pres_native_dist_plot<-ggplot(pred.ml, aes(x = dist, y = fit))+
 oc_pres_native_dist_plot
 
 #Saving the plot as a png
-png("figures/M5_dist_oc_pres_ntvpoints.jpg", width=10, height= 10, units='in', res=300)
+png("figures/M5_dist_oc_pres_ntv.jpg", width=10, height= 10, units='in', res=300)
 oc_pres_native_dist_plot
 dev.off()
 
@@ -721,13 +718,6 @@ plot(E2 ~ abs.lat, data = oceanic.prop.ntv)
 
 var.plot<- ggeffect(model.oc.prop.rac, terms=c("precipitation"), type="re")
 plot(var.plot, colors="darkcyan")
-
-# get outlier in residuals:
-F2 <- fitted(mod)
-dat$F2<- F2 > 0.13 # 675,921,11474
-
-var.plot<- ggeffect(model.oc.prop.rac, terms=c("dist","area"), type="re")
-areadist.ntv.plot<-plot(var.plot)
 
 
 #####FIGURES: Plot of Estimates #####
