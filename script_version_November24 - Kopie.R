@@ -429,6 +429,8 @@ effect.plot
 var.plot<- ggeffect(model.oc.prop.rac, terms=c("dist","area"), type="re")
 plot(var.plot)
 
+
+
 #Figure area:distance interaction for presence of naturalized N-fixing species on oceanic islands
 #create a color scale
 colScale <- scale_colour_manual(values =c ("coral","coral2","coral3","sandybrown"))
@@ -447,6 +449,15 @@ pred <- predict.glm(model.oc.pres.rac,type="response",newdata = pred.dat,se=TRUE
 
 pdat <- cbind(ex.grid,pred) %>%
   left_join(area.minmax)
+
+
+
+#breakpoints<- c(-Inf,mean(gdat.isl.ntz$area)-sd(gdat.isl.ntz$area),mean(gdat.isl.ntz$area)+sd(gdat.isl.ntz$area),Inf)
+# Add size column with custom breakpoints
+#gdat.isl.ntz$areasize <- cut(gdat.isl.ntz$area, 
+#                        breaks = breakpoints, 
+#                         labels = c("small", "medium", "large"))
+#gdat.isl.ntz$areasize <- factor(gdat.isl.ntz$areasize, levels = c("large", "medium", "small"))
 
 #plot the area distance interaction
 areadist_oc_pres_ntz_plot<- ggplot(pdat, aes(x = dist, y = fit, fill=size, color=size))+
@@ -765,6 +776,53 @@ areadist_oc_pres_ntv_plot
 png("figures/M6_areadist_interactioncyan.jpg", width=10, height= 10, units='in', res=300)
 areadist_oc_pres_ntv_plot
 dev.off()
+
+#area plot
+new.dat.oc <- with(oceanic.prop.ntv, expand.grid(area = seq(min(area), max(area), length = 1000))) %>%
+  mutate(rac = mean(rac), abs.lat= mean(oceanic.prop.ntv$abs.lat), dist=mean(oceanic.prop.ntv$dist), temperature= mean(oceanic.prop.ntv$temperature), precipitation=mean(oceanic.prop.ntv$precipitation)) 
+
+pred.ml <- predict(model.oc.prop.rac, newdata = new.dat.oc, type = "response", se = TRUE) %>%
+  as.data.frame() %>%
+  mutate(area = new.dat.oc$area, landtype = "oceanic")
+
+
+oc_prop_native_area_plot<-ggplot(pred.ml, aes(x = area, y = fit))+
+  geom_line(color="darkcyan") +
+  geom_ribbon(aes(ymin=fit-se.fit, ymax=fit+se.fit), alpha=0.4,color="darkcyan", fill="darkcyan")+ 
+  #geom_point(data = gdat.isl.ntv,aes(x=dist,y=prop), color="darkcyan", fill="darkcyan",alpha=0.4)+
+  theme_minimal()+
+  labs(y="Proportion of N-fixing plants")+
+  xlab("area")+  
+  theme(axis.text.y=element_text(size=30))+
+  theme(axis.text.x=element_text(size=30))+
+  theme(axis.title.y=element_text(size=30))+
+  theme(axis.title.x=element_text(size=30,margin = margin(t = 10)))
+
+oc_prop_native_area_plot
+
+
+#distance plot
+new.dat.oc <- with(oceanic.prop.ntv, expand.grid(dist = seq(min(dist), max(dist), length = 1000))) %>%
+  mutate(rac = mean(rac), abs.lat= mean(oceanic.prop.ntv$abs.lat), area=mean(oceanic.prop.ntv$area), temperature= mean(oceanic.prop.ntv$temperature), precipitation=mean(oceanic.prop.ntv$precipitation)) 
+
+pred.ml <- predict(model.oc.prop.rac, newdata = new.dat.oc, type = "response", se = TRUE) %>%
+  as.data.frame() %>%
+  mutate(dist = new.dat.oc$dist, landtype = "oceanic")
+
+
+oc_prop_native_dist_plot<-ggplot(pred.ml, aes(x = dist, y = fit))+
+  geom_line(color="darkcyan") +
+  geom_ribbon(aes(ymin=fit-se.fit, ymax=fit+se.fit), alpha=0.4,color="darkcyan", fill="darkcyan")+ 
+  #geom_point(data = gdat.isl.ntv,aes(x=dist,y=prop), color="darkcyan", fill="darkcyan",alpha=0.4)+
+  theme_minimal()+
+  labs(y="Proportion of N-fixing plants")+
+  xlab("Distance [km]")+  
+  theme(axis.text.y=element_text(size=30))+
+  theme(axis.text.x=element_text(size=30))+
+  theme(axis.title.y=element_text(size=30))+
+  theme(axis.title.x=element_text(size=30,margin = margin(t = 10)))
+
+oc_prop_native_dist_plot
 
 
 #####FIGURES: Plot of Estimates #####

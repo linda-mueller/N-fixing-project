@@ -120,7 +120,7 @@ broad.pres.ntz<-
   geom_point(position=position_dodge(1), size = 2) + 
   geom_errorbar(aes(ymin=lsmean-SE, ymax=lsmean+SE), width=0.4,size=1, position=position_dodge(1)) + 
   theme(legend.justification=c(1,1), legend.position=c(1,1))+
-  geom_bar(stat="identity",position=position_dodge(1), alpha=0.5)+
+  geom_bar(stat="identity",position=position_dodge(1), alpha=0.4)+
   geom_point(data = gdat.ml.ntz,aes(x=landtype,y=presence,color=status),position=position_jitterdodge(dodge.width = 1),size=2,alpha=0.3)+
   coord_cartesian(ylim=c(0,1))+
   colScale+
@@ -332,7 +332,7 @@ broadpropntv<-
   geom_point(position=position_dodge(1), size = 2) + 
   geom_errorbar(aes(ymin=lsmean-SE, ymax=lsmean+SE), width=0.4,size=1, position=position_dodge(1)) + 
   theme(legend.justification=c(1,1), legend.position=c(1,1))+
-  geom_bar(stat="identity",position=position_dodge(1), alpha=0.3)+
+  geom_bar(stat="identity",position=position_dodge(1), alpha=0.4)+
   geom_point(data = gdat.prop.ntv,aes(x=landtype,y=propnfix,color=status),position=position_jitterdodge(dodge.width = 1),size=2,alpha=0.3)+
   coord_cartesian(ylim=c(0,0.16))+
   colScale+
@@ -449,18 +449,12 @@ pdat <- cbind(ex.grid,pred) %>%
   left_join(area.minmax)
 
 
-breakpoints<- c(-Inf,mean(gdat.isl.ntz$area)-sd(gdat.isl.ntz$area),mean(gdat.isl.ntz$area)+sd(gdat.isl.ntz$area),Inf)
-# Add size column with custom breakpoints
-gdat.isl.ntz$areasize <- cut(gdat.isl.ntz$area, 
-                         breaks = breakpoints, 
-                         labels = c("small", "medium", "large"))
-gdat.isl.ntz$areasize <- factor(gdat.isl.ntz$areasize, levels = c("large", "medium", "small"))
 
 #plot the area distance interaction position=position_jitterdodge(dodge.width = 1)
 areadist_oc_pres_ntz_plot<- ggplot(pdat, aes(x = dist, y = fit, fill=size, color=size))+
   geom_line() +
   geom_ribbon(aes(ymin=fit-se.fit, ymax=fit+se.fit), alpha=0.4)+ 
-  #geom_point(data = gdat.isl.ntz,aes(x=dist,y=presence, color=areasize, fill=areasize),alpha=0.4,show.legend = FALSE)+
+  geom_point(data = gdat.isl.ntz,aes(x=dist,y=presence),color= "brown2", fill="brown2",alpha=0.2,show.legend = FALSE)+
   theme_minimal()+
   labs(y="Probability of N-fixing plant species")+
   xlab("Distance [km]")+
@@ -473,8 +467,7 @@ areadist_oc_pres_ntz_plot<- ggplot(pdat, aes(x = dist, y = fit, fill=size, color
   ylim(0,1)+
   guides(
     color = guide_legend(title = ""),  # Combine color legend
-    fill = guide_legend(title = "")  # Ensure fill uses the same legend title
-  ) +
+    fill = guide_legend(title = ""))+  # Ensure fill uses the same legend title
   theme(legend.key.size = unit(1, 'cm'),      #change legend key size
         legend.key.height = unit(1, 'cm'),    #change legend key height
         legend.key.width = unit(1, 'cm'),     #change legend key width
@@ -736,69 +729,6 @@ dat$F2<- F2 > 0.13 # 675,921,11474
 var.plot<- ggeffect(model.oc.prop.rac, terms=c("dist","area"), type="re")
 areadist.ntv.plot<-plot(var.plot)
 
-#area plot
-new.dat.oc <- with(oceanic.prop.ntv, expand.grid(area = seq(min(area), max(area), length = 1000))) %>%
-  mutate(rac = mean(rac), abs.lat= mean(oceanic.prop.ntv$abs.lat), dist=mean(oceanic.prop.ntv$dist), temperature= mean(oceanic.prop.ntv$temperature), precipitation=mean(oceanic.prop.ntv$precipitation)) 
-
-pred.ml <- predict(model.oc.prop.rac, newdata = new.dat.oc, type = "response", se = TRUE) %>%
-  as.data.frame() %>%
-  mutate(area = new.dat.oc$area, landtype = "oceanic")
-
-
-oc_prop_native_area_plot<-ggplot(pred.ml, aes(x = area, y = fit))+
-  geom_line(color="darkcyan") +
-  geom_ribbon(aes(ymin=fit-se.fit, ymax=fit+se.fit), alpha=0.3,color="darkcyan", fill="darkcyan")+ 
-  #geom_point(data = gdat.isl.ntv,aes(x=dist,y=prop), color="darkcyan", fill="darkcyan",alpha=0.4)+
-  theme_minimal()+
-  labs(y="Proportion of N-fixing plants")+
-  xlab("area")+  
-  theme(axis.text.y=element_text(size=30))+
-  theme(axis.text.x=element_text(size=30))+
-  theme(axis.title.y=element_text(size=30))+
-  theme(axis.title.x=element_text(size=30,margin = margin(t = 10)))
-
-oc_prop_native_area_plot
-#Saving the plot as a png
-png("figures/M6_area_prop_ntv.jpg", width=10, height= 10, units='in', res=300)
-oc_prop_native_area_plot
-dev.off()
-
-
-
-#Saving the plot as a png
-png("figures/M6_dist_prop_ntv.jpg", width=10, height= 10, units='in', res=300)
-oc_prop_native_dist_plot
-dev.off()
-
-#distance plot
-new.dat.oc <- with(oceanic.prop.ntv, expand.grid(dist = seq(min(dist), max(dist), length = 1000))) %>%
-  mutate(rac = mean(rac), abs.lat= mean(oceanic.prop.ntv$abs.lat), area=mean(oceanic.prop.ntv$area), temperature= mean(oceanic.prop.ntv$temperature), precipitation=mean(oceanic.prop.ntv$precipitation)) 
-
-pred.ml <- predict(model.oc.prop.rac, newdata = new.dat.oc, type = "response", se = TRUE) %>%
-  as.data.frame() %>%
-  mutate(dist = new.dat.oc$dist, landtype = "oceanic")
-
-
-oc_prop_native_dist_plot<-ggplot(pred.ml, aes(x = dist, y = fit))+
-  geom_line(color="darkcyan") +
-  geom_ribbon(aes(ymin=fit-se.fit, ymax=fit+se.fit), alpha=0.3,color="darkcyan", fill="darkcyan")+ 
-  #geom_point(data = gdat.isl.ntv,aes(x=dist,y=prop), color="darkcyan", fill="darkcyan",alpha=0.4)+
-  theme_minimal()+
-  labs(y="Proportion of N-fixing plants")+
-  xlab("Distance [km]")+  
-  theme(axis.text.y=element_text(size=30))+
-  theme(axis.text.x=element_text(size=30))+
-  theme(axis.title.y=element_text(size=30))+
-  theme(axis.title.x=element_text(size=30,margin = margin(t = 10)))
-
-oc_prop_native_dist_plot
-
-
-#Saving the plot as a png
-png("figures/M6_dist_prop_ntv.jpg", width=10, height= 10, units='in', res=300)
-oc_prop_native_dist_plot
-dev.off()
-
 
 #####FIGURES: Plot of Estimates #####
 
@@ -882,11 +812,9 @@ dev.off()
 pkg_info <-get_pkgs_info(pkgs = c("dplyr","segmented","nlme","mgcv","gridExtra","betareg","MASS","Matrix","lme4","lmerTest","lsmeans","spdep","ggeffects","ggplot2","effects",
                        "ncf","ape","sjPlot","MuMIn","tidyverse","car","V8","DHARMa","broom"), out.dir = getwd())
 
-
 # Extract package names from the data
 used_pkgs <- pkg_info$pkg
 
 # Generate citations only for used packages
 cite_packages(pkgs = used_pkgs, output = "file", out.dir = getwd())
-
 
