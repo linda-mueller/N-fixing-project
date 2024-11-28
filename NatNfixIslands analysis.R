@@ -1,4 +1,4 @@
-#N-fixing project: Script version November 2024
+#data analysis associated with manuscript "Naturalized N-fixing plant species pose an elevated risk to remote islands"
 
 ####Libraries and initial dataset####
 # Load the necessary libraries
@@ -798,7 +798,6 @@ dev.off()
 ####Package versions and citations####
 
 #get packages metadata
-
 pkg_info <-get_pkgs_info(pkgs = c("dplyr","segmented","nlme","mgcv","gridExtra","betareg","MASS","Matrix","lme4","lmerTest","lsmeans","spdep","ggeffects","ggplot2","effects",
                        "ncf","ape","sjPlot","MuMIn","tidyverse","car","V8","DHARMa","broom"), out.dir = getwd())
 

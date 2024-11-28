@@ -1,4 +1,4 @@
-#additional functions for analysis of N-fixing project
+#additional functions for analysis associated with manuscript "Naturalized N-fixing plant species pose an elevated risk to remote islands"
 
 ###########################
 ##### Data exploration ####

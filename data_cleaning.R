@@ -1,8 +1,6 @@
-#13.10.2024
-#Linda Mueller
+#data cleaning for analysis associated with manuscript "Naturalized N-fixing plant species pose an elevated risk to remote islands"
 
-
-###structure; run datacleaning for native species, save resulting dataset, clear workspace, then repeat for naturalized species and combine the two
+###structure; run data cleaning for native species, save resulting dataset, clear workspace, then repeat for naturalized species and combine the two
 
 #load libraries
 library(tidyverse)
